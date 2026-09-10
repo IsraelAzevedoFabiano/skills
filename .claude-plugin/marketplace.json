@@ -1,0 +1,21 @@
+{
+  "name": "israel",
+  "owner": {
+    "name": "Israel Azevedo Fabiano",
+    "url": "https://github.com/IsraelAzevedoFabiano"
+  },
+  "description": "Skills próprias de governança, para usar ao lado do mattpocock-skills.",
+  "plugins": [
+    {
+      "name": "israel-skills",
+      "source": "./",
+      "description": "Constituição do projeto derivada da conversa, e o portão que a confere contra spec, tíquetes, plano e diff.",
+      "category": "engineering",
+      "keywords": [
+        "governanca",
+        "constituicao",
+        "spec-driven"
+      ]
+    }
+  ]
+}

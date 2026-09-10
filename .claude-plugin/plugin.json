@@ -1,0 +1,21 @@
+{
+  "name": "israel-skills",
+  "version": "1.0.0",
+  "description": "Governança para o fluxo do mattpocock-skills: escreve a constituição do projeto a partir da conversa e confere spec, tíquetes, plano e diff contra ela.",
+  "author": {
+    "name": "Israel Azevedo Fabiano"
+  },
+  "homepage": "https://github.com/IsraelAzevedoFabiano/skills",
+  "repository": "https://github.com/IsraelAzevedoFabiano/skills",
+  "license": "MIT",
+  "keywords": [
+    "governanca",
+    "constituicao",
+    "spec-driven",
+    "engineering"
+  ],
+  "skills": [
+    "./skills/governanca/constituicao",
+    "./skills/governanca/conformidade"
+  ]
+}

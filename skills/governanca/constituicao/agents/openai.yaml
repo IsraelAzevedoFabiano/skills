@@ -1,0 +1,5 @@
+interface:
+  display_name: "Constituição"
+  short_description: "Escreve ou emenda a constituição do projeto"
+policy:
+  allow_implicit_invocation: false
