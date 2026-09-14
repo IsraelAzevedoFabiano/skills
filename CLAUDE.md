@@ -1,7 +1,15 @@
 # Manutenção deste repo
 
 Duas skills de governança, distribuídas como plugin do Claude Code, para usar ao lado do
-`mattpocock-skills`. Ver [README.md](./README.md) para o que elas fazem e como instalar.
+`mattpocock-skills`, mais o `template/` que `scripts/init-project.*` semeia num projeto novo. Ver
+[README.md](./README.md) para o que fazem e como instalar.
+
+Duas coisas distintas moram aqui, e a diferença importa:
+
+- **`skills/`** é o plugin. Chega ao usuário por `claude plugin install`, atualiza sozinho, é
+  read-only na máquina dele.
+- **`template/`** é arquivo copiado. Chega por `init-project`, e a partir dali é do projeto: o dono
+  edita à vontade e um `git pull` aqui não alcança o que já foi semeado.
 
 ## Convenções herdadas do mattpocock/skills
 
@@ -22,8 +30,15 @@ Seguir, porque as skills conviverão com as dele na mesma sessão:
 
 - Toda skill em `skills/` tem entrada no array `skills` de `.claude-plugin/plugin.json`.
 - `version` do `plugin.json` é o que o Claude usa para decidir se quem instalou vê atualização.
-  Bump a cada mudança publicada.
+  Bump a cada mudança em `skills/`. Mudança só em `template/` ou `scripts/` não pede bump: elas não
+  chegam pelo plugin, chegam por `init-project` rodado à mão.
 - `claude plugin validate . --strict` passa antes de qualquer push.
+- `node template/.claude/hooks/test.js` passa antes de qualquer push que toque o hook de segredos.
+  Padrão novo costuma trazer falso positivo junto, e falso positivo trava trabalho legítimo.
+- Nada em `template/` depende de caminho deste repo: o conteúdo é copiado literalmente para o
+  projeto e roda de lá. Só `node` é pressuposto.
+- `template/scripts/aplicar-blindagem.js` e o `init-project` fazem merge em `settings.json` e
+  `.gitignore`, nunca substituição. Projeto que já tem hook ou regra própria não pode perdê-la.
 
 ## Idioma
 

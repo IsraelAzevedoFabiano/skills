@@ -1,0 +1,25 @@
+BLOQUEIA|Read .env|Read|file_path|C:/x/.env
+BLOQUEIA|Read .env.production|Read|file_path|/a/b/.env.production
+BLOQUEIA|Read chave.pem|Read|file_path|/a/chave.pem
+BLOQUEIA|Read id_rsa|Read|file_path|/home/u/.ssh/id_rsa
+BLOQUEIA|Write em .env|Write|file_path|./.env
+LIBERA|Read .env.exemplo|Read|file_path|/a/integra-pje/.env.exemplo
+LIBERA|Read settings.json|Read|file_path|/a/.claude/settings.json
+BLOQUEIA|cat .env|Bash|command|cat .env
+BLOQUEIA|cat ../.env com pipe|Bash|command|cat ../.env | head -3
+BLOQUEIA|grep no .env|Bash|command|grep API_KEY .env
+BLOQUEIA|source .env|Bash|command|source .env && echo ok
+BLOQUEIA|dot source .env|Bash|command|. ./.env
+BLOQUEIA|Get-Content .env|PowerShell|command|Get-Content ./.env
+BLOQUEIA|python le .env|Bash|command|python -c "open('.env').read()"
+BLOQUEIA|cat certificado.pem|Bash|command|cat /etc/ssl/certificado.pem
+LIBERA|echo para gitignore|Bash|command|echo ".env" >> .gitignore
+LIBERA|git check-ignore|Bash|command|git check-ignore -v .env
+LIBERA|ls -la .env|Bash|command|ls -la .env
+LIBERA|find -name .env|Bash|command|find . -name .env
+LIBERA|find com ponto|Bash|command|find . -type f -name "*.env"
+LIBERA|cat .env.example|Bash|command|cat .env.example
+LIBERA|cat README.md|Bash|command|cat README.md
+LIBERA|git status|Bash|command|git status --short
+LIBERA|cat environment.ts|Bash|command|cat src/environment.ts
+LIBERA|cd e ls|Bash|command|cd /tmp && ls -la

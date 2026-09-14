@@ -37,7 +37,20 @@ arquivos editáveis para dentro do projeto. Escolha um; aqui a escolha é plugin
 
 ## Num projeto novo
 
-Três comandos, na ordem, uma vez cada:
+Primeiro, um comando no terminal, de dentro deste repo:
+
+```sh
+./scripts/init-project.sh /caminho/do/projeto --user
+```
+
+Windows: `.\scripts\init-project.ps1 -Destino C:\caminho\do\projeto -User`
+
+Ele copia `template/` para o projeto, declara os dois plugins no `.claude/settings.json` de lá
+(que é o `pyproject.toml` da metodologia: quem clonar o projeto recebe os plugins ao abrir a
+sessão), instala a blindagem de segredos e roda a bateria que a confere. É idempotente, e `--user`
+estende a blindagem a todo repositório da máquina.
+
+Depois, três comandos na sessão, na ordem, uma vez cada:
 
 ```
 /setup-matt-pocock-skills    → docs/agents/*.md + bloco ## Agent skills no CLAUDE.md
@@ -56,6 +69,35 @@ Depois, o ciclo de trabalho de sempre:
 
 `conformidade-constitucional` entra sozinha ao longo desse ciclo, porque os gatilhos dela casam com
 o que essas skills estão fazendo.
+
+## Blindagem de segredos
+
+O agente não lê `.env` nem credenciais. Isso não é promessa de comportamento: é bloqueio do
+harness, e por isso vale igual para qualquer agente que abra o projeto, inclusive um que nunca
+tenha visto o `CLAUDE.md`.
+
+| Peça | O que faz |
+|---|---|
+| `template/.claude/hooks/block-secrets.js` | Hook `PreToolUse` que nega Read, Edit, Write, Glob, Grep, Bash e PowerShell quando o alvo é `.env*`, `.pem`, `.key`, `.p12`, `id_rsa`, `.netrc`, `.npmrc`, `.pgpass`, `credentials`, `secrets.*` |
+| `template/scripts/aplicar-blindagem.js` | Faz merge do `permissions.deny` e do hook no `settings.json`, e dos padrões no `.gitignore` do repo |
+| `template/.claude/hooks/test.js` | `node .claude/hooks/test.js`: 25 casos, metade deles falso positivo |
+
+Arquivo de exemplo (`.env.example`, `.env.exemplo`, `.env.sample`) passa de propósito: não carrega
+segredo, e é por ele que o agente descobre quais variáveis existem sem ver valor nenhum.
+
+Três decisões que explicam o desenho:
+
+**Bloqueio, não princípio.** Uma regra escrita em prompt ou em `CONSTITUTION.md` não impede ninguém
+de rodar `cat .env`; o hook impede. É o terceiro mecanismo desta lista abaixo aplicado a segredo:
+configuração vive em arquivo.
+
+**Só comando que lê dispara.** O hook checa o comando inteiro contra uma lista de leitores (`cat`,
+`grep`, `sort`, `python`, `node`, `Get-Content`…). `ls`, `find`, `rm`, `git` e `echo` citam o nome
+do arquivo sem abrir o conteúdo, e passam. Sem isso, `echo ".env" >> .gitignore` seria bloqueado.
+
+**Metade da bateria testa falso positivo.** O risco real de um filtro assim não é deixar passar, é
+travar trabalho legítimo. O falso positivo que sobra é o comando composto: um leitor numa parte e
+`.env` em outra bloqueia tudo. A saída é rodar os comandos separados, nunca desligar o hook.
 
 ## Por que isto não se desvia, e um prompt se desvia
 
