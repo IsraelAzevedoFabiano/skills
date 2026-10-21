@@ -9,6 +9,23 @@ const { execFileSync } = require('node:child_process');
 const template = path.resolve(__dirname, '../template/.codex/hooks');
 const SOURCE = fs.existsSync(template) ? template : path.resolve(__dirname, '../.codex/hooks');
 const STATUS = 'Israel skills: conferindo acesso a segredos';
+const NODE_RESERVA = fs.realpathSync(process.execPath);
+const citarPosix = valor => "'" + valor.replace(/'/g, "'\\''") + "'";
+const citarPowerShell = valor => "'" + valor.replace(/'/g, "''") + "'";
+
+function comandosDoHook(script) {
+  const falha = 'Hook de segredos nao rodou; chamada bloqueada.';
+  return {
+    command: 'N=$(command -v node) || N=' + citarPosix(NODE_RESERVA.replace(/\\/g, '/')) +
+      '; "$N" ' + citarPosix(script.replace(/\\/g, '/')) +
+      ' || { echo "' + falha + '" >&2; exit 2; }',
+    commandWindows: 'try { $n = Get-Command node -CommandType Application -ErrorAction SilentlyContinue; ' +
+      'if ($n) { & $n.Source ' + citarPowerShell(script) + ' } else { & ' +
+      citarPowerShell(NODE_RESERVA) + ' ' + citarPowerShell(script) +
+      ' }; if ($LASTEXITCODE -ne 0) { exit 2 } } catch { [Console]::Error.WriteLine(' +
+      citarPowerShell(falha) + '); exit 2 }',
+  };
+}
 
 function semLinks(caminho) {
   for (let atual = path.resolve(caminho); ; atual = path.dirname(atual)) {
@@ -49,13 +66,11 @@ function instalar(diretorioCodex) {
   if (config.hooks.PreToolUse === undefined) config.hooks.PreToolUse = [];
   if (!Array.isArray(config.hooks.PreToolUse)) throw new Error('PreToolUse deve ser lista');
   const script = path.join(destino, 'hooks', 'israel-skills', 'block-secrets.js');
-  const universal = script.replace(/\\/g, '/');
   const grupo = {
     matcher: '.*',
     hooks: [{
       type: 'command',
-      command: "node '" + universal.replace(/'/g, "'\\''") + "'",
-      commandWindows: 'node "' + script + '"',
+      ...comandosDoHook(script),
       timeout: 10,
       statusMessage: STATUS,
     }],

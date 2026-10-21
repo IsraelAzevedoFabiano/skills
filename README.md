@@ -18,6 +18,19 @@ tíquetes, planejar e revisar. O agente a alcança sozinho, sem você pedir.
 
 ## Instalação
 
+Com Node, Git e os CLIs das ferramentas instalados, um comando na copia deste repo
+prepara o projeto: instala os plugins de governanca e do Matt em cada CLI disponivel,
+as travas dos dois ambientes e confere o bloqueio. No Windows:
+
+```powershell
+.\scripts\init-project.ps1 -Destino C:\caminho\do\projeto -User
+```
+
+Linux/macOS: `sh scripts/init-project.sh /caminho/do/projeto --user`.
+Para atualizar um projeto ja semeado, repita o comando. No Codex, a revisao de confianca
+em `/hooks` continua obrigatoria apos uma alteracao; o instalador nao a ignora.
+Sem um CLI, seus hooks ficam preparados e a ausencia dos plugins e informada.
+
 **Uma vez por máquina**, não por projeto. As duas linhas abaixo instalam no escopo `user`.
 
 ```bash
@@ -177,7 +190,9 @@ node scripts/install-codex-hooks.js --user
 O comando usa `CODEX_HOME`, quando definido, ou `~/.codex`. Instala os scripts em
 `hooks/israel-skills/` e faz merge em `hooks.json`. Preserva os outros eventos e hooks,
 faz backup dos arquivos alterados e nao duplica a entrada quando repetido. Nao muda
-`config.toml`, permissoes nem registros de confianca. Requer Node no PATH da sessao Codex.
+`config.toml`, permissoes nem registros de confianca. Requer Node ao instalar. Na execucao,
+usa o Node do PATH ou o caminho real do Node que rodou o instalador, como na correcao
+`c5e50cf` do Claude. Falha ao executar o hook retorna codigo 2 para bloquear a chamada.
 
 Para instalar somente num projeto, em vez do escopo de usuario:
 

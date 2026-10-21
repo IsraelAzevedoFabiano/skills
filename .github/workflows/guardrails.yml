@@ -16,3 +16,6 @@ jobs:
       - run: node template/.codex/hooks/test.js template/.claude/hooks/block-secrets.js
       - run: node template/.claude/hooks/test.js
       - run: node scripts/test-install-codex-hooks.js
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/test-init-project.ps1
