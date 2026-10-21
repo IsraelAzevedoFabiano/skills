@@ -1,0 +1,18 @@
+name: Travas compartilhadas
+on: [push, pull_request]
+jobs:
+  guardrails:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/sync-guardrails.js --check
+      - run: node template/.codex/hooks/test.js
+      - run: node template/.codex/hooks/test.js template/.claude/hooks/block-secrets.js
+      - run: node template/.claude/hooks/test.js
+      - run: node scripts/test-install-codex-hooks.js

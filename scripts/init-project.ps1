@@ -33,8 +33,10 @@ if ($Destino -eq $repo -or $Destino.StartsWith($repo + [IO.Path]::DirectorySepar
 
 Write-Host "==> semeando $Destino"
 New-Item -ItemType Directory -Force -Path (Join-Path $Destino ".claude\hooks") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $Destino ".codex\hooks") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Destino "scripts") | Out-Null
 Copy-Item -Force -Path (Join-Path $template ".claude\hooks\*") -Destination (Join-Path $Destino ".claude\hooks")
+Copy-Item -Force -Path (Join-Path $template ".codex\hooks\*") -Destination (Join-Path $Destino ".codex\hooks")
 Copy-Item -Force -Path (Join-Path $template "scripts\*") -Destination (Join-Path $Destino "scripts")
 Write-Host "  .claude\hooks\  block-secrets.js, casos.txt, test.js"
 Write-Host "  scripts\        aplicar-blindagem.js, setup-metodologia.sh, setup-metodologia.ps1"

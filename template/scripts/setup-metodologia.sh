@@ -1,43 +1,20 @@
 #!/usr/bin/env sh
-# Instala a metodologia deste projeto: plugins de skills + blindagem de segredos.
-# Idempotente: rodar de novo nao duplica nada.
-#
-# Uso:  sh scripts/setup-metodologia.sh [--user]
-#
-#   --user  instala o hook de segredos tambem em ~/.claude/, valendo para
-#           qualquer repositorio desta maquina
-#
-# Os plugins tambem sao declarados em .claude/settings.json, entao o Claude Code
-# ja os instala ao abrir o projeto. Este script serve para maquina nova sem
-# sessao aberta, para CI, e para conferir o estado.
+# Travas compartilhadas antes dos plugins opcionais. Migracao 2026-10-21.
 set -e
-
 cd "$(dirname "$0")/.."
-
-echo "==> marketplace israel (IsraelAzevedoFabiano/skills)"
-claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project || true
-
-echo "==> plugins"
-claude plugin install mattpocock-skills@claude-plugins-official --scope project || true
-claude plugin install israel-skills@israel --scope project || true
-
-echo
 node scripts/aplicar-blindagem.js "$@"
-
-echo
-echo "==> conferindo o bloqueio de segredos"
+case " $* " in
+  *' --user '*) node scripts/install-codex-hooks.js --user ;;
+  *) node scripts/install-codex-hooks.js --project . ;;
+esac
 node .claude/hooks/test.js
-
-echo
-claude plugin list
-
-cat <<'FIM'
-
-Falta o bootstrap por repositorio. Em uma sessao do Claude Code, nesta ordem:
-
-  1. /setup-matt-pocock-skills
-  2. /grill-with-docs
-  3. /constituicao
-
-Sao user-invoked: script nenhum dispara. Ver CLAUDE.md.
-FIM
+if command -v claude >/dev/null 2>&1; then
+  claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project || true
+  claude plugin install mattpocock-skills@claude-plugins-official --scope project || true
+  claude plugin install israel-skills@israel --scope project || true
+  claude plugin list
+else
+  echo 'Claude CLI ausente; travas preparadas, plugins Claude nao instalados.'
+fi
+echo 'Codex: abra /hooks e revise a confianca antes de contar com o bloqueio.'
+echo 'Bootstrap humano: /setup-matt-pocock-skills, /grill-with-docs, /constituicao.'

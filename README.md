@@ -1,4 +1,4 @@
-# Skills de governança
+# Skills e travas compartilhadas
 
 Duas skills próprias, para usar **ao lado** do [`mattpocock-skills`](https://github.com/mattpocock/skills).
 
@@ -72,13 +72,14 @@ o que essas skills estão fazendo.
 
 ## Blindagem de segredos
 
-O agente não lê `.env` nem credenciais. Isso não é promessa de comportamento: é bloqueio do
-harness, e por isso vale igual para qualquer agente que abra o projeto, inclusive um que nunca
-tenha visto o `CLAUDE.md`.
+A politica compartilhada intercepta acessos explicitos a `.env` e credenciais nos hooks
+suportados pelo Claude e pelo Codex. O bloqueio depende da instalacao e ativacao no harness.
+Os limites e a etapa de confianca do Codex estao descritos abaixo; nao e isolamento do sistema
+de arquivos nem garantia de que qualquer agente esteja coberto.
 
 | Peça | O que faz |
 |---|---|
-| `template/.claude/hooks/block-secrets.js` | Hook `PreToolUse` que nega Read, Edit, Write, Glob, Grep, Bash e PowerShell quando o alvo é `.env*`, `.pem`, `.key`, `.p12`, `id_rsa`, `.netrc`, `.npmrc`, `.pgpass`, `credentials`, `secrets.*` |
+| `guardrails/block-secrets.js`, copiado para `template/.claude/hooks/` e `template/.codex/hooks/` | Hook `PreToolUse` que nega Read, Edit, Write, Glob, Grep, Bash e PowerShell quando o alvo é `.env*`, `.pem`, `.key`, `.p12`, `id_rsa`, `.netrc`, `.npmrc`, `.pgpass`, `credentials`, `secrets.*` |
 | `template/scripts/aplicar-blindagem.js` | Faz merge do `permissions.deny` e do hook no `settings.json`, e dos padrões no `.gitignore` do repo |
 | `template/.claude/hooks/test.js` | `node .claude/hooks/test.js`: 25 casos, metade deles falso positivo |
 
@@ -160,3 +161,107 @@ O fluxo, a estrutura de buckets e as convenções de invocação são de
 [mattpocock/skills](https://github.com/mattpocock/skills) (MIT). O formato da constituição, a
 disciplina de emenda e as regras de validação vêm de
 [github/spec-kit](https://github.com/github/spec-kit) (MIT).
+
+## Codex: skills e hooks de segredos
+
+Migracao adicionada em 2026-10-20. As skills de governanca ja incluem `agents/openai.yaml`;
+se o plugin `israel-skills` ja aparece no Codex, nao instale copias adicionais das skills.
+A instalacao dos hooks abaixo e independente do plugin e nao muda os hooks do Claude.
+
+Uma vez por maquina, na raiz deste repositorio:
+
+```powershell
+node scripts/install-codex-hooks.js --user
+```
+
+O comando usa `CODEX_HOME`, quando definido, ou `~/.codex`. Instala os scripts em
+`hooks/israel-skills/` e faz merge em `hooks.json`. Preserva os outros eventos e hooks,
+faz backup dos arquivos alterados e nao duplica a entrada quando repetido. Nao muda
+`config.toml`, permissoes nem registros de confianca. Requer Node no PATH da sessao Codex.
+
+Para instalar somente num projeto, em vez do escopo de usuario:
+
+```powershell
+node scripts/install-codex-hooks.js --project C:\caminho\do\projeto
+```
+
+Nao e necessario instalar nos dois escopos: os hooks se somam. Os comandos usam caminhos
+absolutos para funcionar mesmo quando o agente esta num subdiretorio. Ao mover o projeto ou
+copiar para outra maquina, execute o instalador novamente para ajustar esses caminhos.
+Os instaladores `init-project.*` copiam os dois adaptadores. O setup instala as travas antes
+dos plugins opcionais; sem Claude CLI, as travas continuam sendo instaladas. Com `--user`
+ou `-User`, o Codex usa o escopo de usuario; sem essa opcao, usa somente o projeto.
+
+### Ativacao obrigatoria no Codex
+
+Abra uma nova sessao, use `/hooks`, revise a entrada **Israel skills: conferindo acesso a
+segredos** e marque-a como confiavel. Hooks novos ou alterados ficam ignorados ate essa revisao.
+No escopo de projeto, a camada `.codex/` tambem precisa ser confiavel. Uma politica gerenciada
+pode desativar hooks ou permitir apenas os administrados; nesse caso, a instalacao de usuario
+nao se sobrepoe a ela. Nao use bypass de confianca para validar a instalacao.
+
+A documentacao oficial descreve o [contrato e a confianca dos hooks](https://learn.chatgpt.com/docs/hooks).
+O Codex representa comandos de terminal como `Bash` no hook, inclusive `exec_command`;
+`apply_patch` chega com o patch no campo `command`. O matcher desta instalacao cobre todos os
+nomes de ferramentas locais suportadas, incluindo MCP, e o script examina seus argumentos.
+
+### Verificacao sem segredos reais
+
+```powershell
+node template/.codex/hooks/test.js
+node scripts/test-install-codex-hooks.js
+node template/.claude/hooks/test.js
+```
+
+Os testes mandam payloads JSON ficticios ao hook e conferem a decisao, sem executar o comando
+contido no payload. A bateria do instalador usa pasta temporaria. Para verificar a integracao
+real apos confiar no hook, crie um projeto descartavel com uma `.env` contendo apenas um marcador
+ficticio e um `.env.example` ficticio: a leitura do primeiro deve ser negada e a do exemplo permitida.
+Isso e diferente de rodar os testes do script: estes nao provam que o aplicativo carregou o hook.
+Nunca use um `.env` real como teste de ativacao.
+
+### Limites da protecao
+
+Esta migracao e uma barreira adicional para acessos explicitos, nao isolamento de arquivos.
+O filtro nao interpreta completamente shell, JavaScript ou Python. Caminhos calculados, codigo
+em scripts ja existentes, buscas amplas, links e ferramentas com argumentos desconhecidos podem
+nao revelar o alvo ao hook. Ferramentas hospedadas e alguns caminhos especializados nao passam
+por `PreToolUse`; entradas em uma sessao de terminal ja iniciada tambem nao o executam novamente.
+Erros ou timeout do proprio hook podem nao bloquear a chamada no Codex.
+
+Para garantir que um processo nao possa ler um segredo, use tambem restricoes reais do sistema
+de arquivos/sandbox, definidas e verificadas para o ambiente. `.gitignore`, regras de prompt e
+este filtro nao substituem essa restricao. Nao alteramos ACLs, politicas corporativas ou o
+sandbox automaticamente como parte desta migracao.
+
+
+## Manter as travas agnosticas de ferramenta
+
+A fonte editavel e `guardrails/block-secrets.js`. O contrato JSON PreToolUse e compativel com
+Claude e Codex; a descoberta/configuracao difere por ferramenta. Os adaptadores sao copias
+identicas e autonomas para que os templates e hooks de usuario nao dependam deste checkout.
+Nunca altere apenas uma copia. Depois de mudar a politica ou o instalador Codex:
+
+```sh
+node scripts/sync-guardrails.js
+node scripts/sync-guardrails.js --check
+node template/.codex/hooks/test.js
+node template/.codex/hooks/test.js template/.claude/hooks/block-secrets.js
+node template/.claude/hooks/test.js
+node scripts/test-install-codex-hooks.js
+```
+
+O teste `--check` acusa divergencia entre as copias; novos casos de bloqueio e de acesso legitimo
+precisam passar nos dois adaptadores. Ferramenta nova exige adaptador, documentacao da cobertura
+e teste do carregamento: copiar um SKILL.md nao ativa uma trava. Projetos ja semeados precisam
+receber novamente o template atualizado; a instalacao global Codex se atualiza repetindo `--user`.
+
+Os manifests existentes continuam sendo a distribuicao das skills. Esta mudanca nao publica uma
+nova versao de skills nem as instala em duplicidade. O commit da migracao e local ate ser enviado.
+
+A esteira `.github/workflows/guardrails.yml` executa essa bateria em Windows e Linux e recusa
+copias divergentes. Validacao local desta migracao: 66 casos por adaptador, 25 casos legados,
+merge/idempotencia/backup do instalador e semeadura PowerShell em projeto descartavel. Nenhum
+`.env` real foi aberto. O validador Claude atual aceita o marketplace; `plugin validate --strict`
+acusa o aviso preexistente sobre CLAUDE.md na raiz, que nao e contexto distribuido pelo plugin.
+As skills e os manifests nao foram alterados nesta migracao.
