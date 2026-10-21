@@ -59,3 +59,54 @@ const comandoQuebrado = comando.split(scriptInstalado).join(scriptInstalado + '.
 const ausente = rodar(comandoQuebrado);
 assert.equal(ausente.status, 2, 'hook ausente deve bloquear com exit 2');
 console.log('Node fora do PATH: reserva funciona; hook ausente retorna bloqueio.');
+
+// Regressao Windows: varios Nodes no PATH e ambiente sem PATHEXT.
+if (process.platform === 'win32') {
+  const executar = (cmd, input, env) => spawnSync(terminal,
+    ['-NoProfile', '-NonInteractive', '-Command', cmd],
+    { input, encoding: 'utf8', env, timeout: 30000 });
+  const verificar = (resultado, negado, rotulo) => {
+    assert.equal(resultado.status, 0, rotulo + ': ' + (resultado.error?.message || resultado.stderr));
+    assert.equal(resultado.stderr, '', rotulo);
+    if (negado) assert.equal(JSON.parse(resultado.stdout).hookSpecificOutput.permissionDecision, 'deny', rotulo);
+    else assert.equal(resultado.stdout, '', rotulo);
+  };
+  const dirs = ['node-a', 'node-b'].map(nome => path.join(raiz, nome));
+  for (const dir of dirs) {
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, 'node.cmd'), '@echo off\r\n"' + process.execPath + '" %*\r\nexit /b %errorlevel%\r\n');
+  }
+  const varios = { ...process.env, PATH: dirs.join(path.delimiter), PATHEXT: '.COM;.EXE;.BAT;.CMD' };
+  const encontrados = executar('(Get-Command node -CommandType Application).Count', '', varios);
+  assert.equal(encontrados.status, 0, encontrados.stderr);
+  assert.equal(Number(encontrados.stdout.trim()), 2, 'fixture deve encontrar dois Nodes');
+  const permitido = JSON.stringify({ tool_input: { cmd: 'git status' } });
+  verificar(executar(comando, permitido, varios), false, 'varios Nodes: permitir');
+  verificar(executar(comando, payload, varios), true, 'varios Nodes: negar');
+  verificar(executar(comando, 'json-invalido', varios), true, 'varios Nodes: JSON invalido');
+  for (const extensoes of [undefined, '']) {
+    const semExtensoes = { SystemRoot: process.env.SystemRoot, PATH: '' };
+    if (extensoes !== undefined) semExtensoes.PATHEXT = extensoes;
+    const bloqueado = executar(comando, permitido, semExtensoes);
+    assert.equal(bloqueado.status, 2, 'sem PATHEXT deve bloquear com diagnostico');
+    assert.match(bloqueado.stderr, /Node nao retornou codigo de saida/);
+  }
+  const minimo = { SystemRoot: process.env.SystemRoot, PATH: '', PATHEXT: '.COM;.EXE;.BAT;.CMD' };
+  verificar(executar(comando, permitido, minimo), false, 'ambiente minimo: permitir');
+  verificar(executar(comando, payload, minimo), true, 'ambiente minimo: negar');
+  const reserva = fs.realpathSync(process.execPath).replace(/'/g, "''");
+  const nodeAusente = comando.split("'" + reserva + "'").join("'" + reserva + ".ausente'");
+  const falha = executar(nodeAusente, permitido, minimo);
+  assert.equal(falha.status, 2, 'Node ausente deve bloquear');
+  assert.match(falha.stderr, /CommandNotFoundException/, 'diagnostico deve preservar a causa');
+  const semExecucao = comando.replace(/& \$n\.Source '[^']*'/, '$null')
+    .replace('& ' + "'" + reserva + "' '" + scriptInstalado.replace(/'/g, "''") + "'", '$null');
+  assert.notEqual(semExecucao, comando);
+  const semCodigo = executar(semExecucao, permitido, minimo);
+  assert.equal(semCodigo.status, 2, 'ausencia de codigo nao pode liberar');
+  assert.match(semCodigo.stderr, /Node nao retornou codigo de saida/);
+  const scriptAusente = executar(comandoQuebrado, permitido, minimo);
+  assert.equal(scriptAusente.status, 2);
+  assert.match(scriptAusente.stderr, /Node terminou com codigo 1/);
+  console.log('Windows: varios Nodes, PATHEXT ausente, JSON invalido e falhas diagnosticadas passaram.');
+}

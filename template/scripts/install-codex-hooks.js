@@ -19,11 +19,16 @@ function comandosDoHook(script) {
     command: 'N=$(command -v node) || N=' + citarPosix(NODE_RESERVA.replace(/\\/g, '/')) +
       '; "$N" ' + citarPosix(script.replace(/\\/g, '/')) +
       ' || { echo "' + falha + '" >&2; exit 2; }',
-    commandWindows: 'try { $n = Get-Command node -CommandType Application -ErrorAction SilentlyContinue; ' +
-      'if ($n) { & $n.Source ' + citarPowerShell(script) + ' } else { & ' +
+    // Get-Command pode retornar varios Nodes (fnm e runtime do Codex).
+    // PowerShell 5.1 pode nao executar nativos sem PATHEXT, mesmo se definido depois.
+    commandWindows: 'try { $n = Get-Command node -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1; ' +
+      '$LASTEXITCODE = $null; if ($n) { & $n.Source ' + citarPowerShell(script) + ' } else { & ' +
       citarPowerShell(NODE_RESERVA) + ' ' + citarPowerShell(script) +
-      ' }; if ($LASTEXITCODE -ne 0) { exit 2 } } catch { [Console]::Error.WriteLine(' +
-      citarPowerShell(falha) + '); exit 2 }',
+      ' }; if ($null -eq $LASTEXITCODE) { throw ' +
+      citarPowerShell('Node nao retornou codigo de saida; checagem nao executada.') +
+      ' }; if ($LASTEXITCODE -ne 0) { throw ("Node terminou com codigo " + $LASTEXITCODE + ".") } ' +
+      '} catch { [Console]::Error.WriteLine(' + citarPowerShell(falha + ' ') +
+      ' + $_.Exception.GetType().FullName + ": " + $_.Exception.Message); exit 2 }',
   };
 }
 
