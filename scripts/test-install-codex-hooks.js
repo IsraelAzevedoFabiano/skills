@@ -62,9 +62,20 @@ console.log('Node fora do PATH: reserva funciona; hook ausente retorna bloqueio.
 
 // Regressao Windows: varios Nodes no PATH e ambiente sem PATHEXT.
 if (process.platform === 'win32') {
-  const executar = (cmd, input, env) => spawnSync(terminal,
-    ['-NoProfile', '-NonInteractive', '-Command', cmd],
-    { input, encoding: 'utf8', env, timeout: 30000 });
+  const executar = (cmd, input, env) => {
+    const resultado = spawnSync(terminal,
+      ['-NoProfile', '-NonInteractive', '-Command', cmd],
+      { input, encoding: 'utf8', env, timeout: 30000 });
+    // Timeout/erro de inicializacao nao e um codigo de saida do hook.
+    assert.ifError(resultado.error);
+    assert.equal(resultado.signal, null, 'PowerShell interrompido por sinal');
+    return resultado;
+  };
+  // Remover apenas PATH/PATHEXT: PowerShell/.NET tambem usa perfil e pastas
+  // temporarias do Windows. Nao testar sua inicializacao com ambiente vazio.
+  // Windows nao distingue maiusculas, mas o objeto env do spawn distingue.
+  const ambienteBase = Object.fromEntries(Object.entries(process.env)
+    .filter(([chave]) => !/^(PATH|PATHEXT)$/i.test(chave)));
   const verificar = (resultado, negado, rotulo) => {
     assert.equal(resultado.status, 0, rotulo + ': ' + (resultado.error?.message || resultado.stderr));
     assert.equal(resultado.stderr, '', rotulo);
@@ -76,7 +87,7 @@ if (process.platform === 'win32') {
     fs.mkdirSync(dir);
     fs.writeFileSync(path.join(dir, 'node.cmd'), '@echo off\r\n"' + process.execPath + '" %*\r\nexit /b %errorlevel%\r\n');
   }
-  const varios = { ...process.env, PATH: dirs.join(path.delimiter), PATHEXT: '.COM;.EXE;.BAT;.CMD' };
+  const varios = { ...ambienteBase, PATH: dirs.join(path.delimiter), PATHEXT: '.COM;.EXE;.BAT;.CMD' };
   const encontrados = executar('(Get-Command node -CommandType Application).Count', '', varios);
   assert.equal(encontrados.status, 0, encontrados.stderr);
   assert.equal(Number(encontrados.stdout.trim()), 2, 'fixture deve encontrar dois Nodes');
@@ -85,15 +96,15 @@ if (process.platform === 'win32') {
   verificar(executar(comando, payload, varios), true, 'varios Nodes: negar');
   verificar(executar(comando, 'json-invalido', varios), true, 'varios Nodes: JSON invalido');
   for (const extensoes of [undefined, '']) {
-    const semExtensoes = { SystemRoot: process.env.SystemRoot, PATH: '' };
+    const semExtensoes = { ...ambienteBase, PATH: '' };
     if (extensoes !== undefined) semExtensoes.PATHEXT = extensoes;
     const bloqueado = executar(comando, permitido, semExtensoes);
     assert.equal(bloqueado.status, 2, 'sem PATHEXT deve bloquear com diagnostico');
     assert.match(bloqueado.stderr, /Node nao retornou codigo de saida/);
   }
-  const minimo = { SystemRoot: process.env.SystemRoot, PATH: '', PATHEXT: '.COM;.EXE;.BAT;.CMD' };
-  verificar(executar(comando, permitido, minimo), false, 'ambiente minimo: permitir');
-  verificar(executar(comando, payload, minimo), true, 'ambiente minimo: negar');
+  const minimo = { ...ambienteBase, PATH: '', PATHEXT: '.COM;.EXE;.BAT;.CMD' };
+  verificar(executar(comando, permitido, minimo), false, 'Node de reserva: permitir');
+  verificar(executar(comando, payload, minimo), true, 'Node de reserva: negar');
   const reserva = fs.realpathSync(process.execPath).replace(/'/g, "''");
   const nodeAusente = comando.split("'" + reserva + "'").join("'" + reserva + ".ausente'");
   const falha = executar(nodeAusente, permitido, minimo);
