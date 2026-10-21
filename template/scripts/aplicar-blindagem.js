@@ -48,6 +48,20 @@ const GITIGNORE = [
   'secrets.json',
 ];
 
+// O shell do hook nem sempre tem node no PATH: fnm e nvm so entram pelo perfil
+// do terminal, e o Claude Desktop (modo Code) nao carrega esse perfil. Reserva:
+// o node que roda este instalador, pelo caminho real (o do fnm e um atalho por
+// sessao, que some).
+const NODE_RESERVA = fs.realpathSync(process.execPath).replace(/\\/g, '/');
+
+// Hook que falha ao rodar nao bloqueia: o Claude Code libera a ferramenta.
+// O exit 2 inverte isso. Sem hook, nada passa.
+function comandoDoHook(script) {
+  const reserva = "'" + NODE_RESERVA.replace(/'/g, "'\\''") + "'";
+  return 'N="$(command -v node || echo ' + reserva + ')"; "$N" "' + script + '"' +
+    " || { echo 'Hook de segredos nao rodou (node ausente?); bloqueado por precaucao.' >&2; exit 2; }";
+}
+
 function lerJson(arquivo) {
   if (!fs.existsSync(arquivo)) return {};
   const texto = fs.readFileSync(arquivo, 'utf8').trim();
@@ -67,7 +81,18 @@ function aplicarSettings(arquivo, comandoHook) {
 
   s.hooks = s.hooks || {};
   s.hooks.PreToolUse = s.hooks.PreToolUse || [];
-  const tinhaHook = JSON.stringify(s.hooks.PreToolUse).includes('block-secrets.js');
+  // Instalacao antiga ("node ..." puro) e reescrita: rodar de novo corrige.
+  let atualizou = false;
+  const existentes = s.hooks.PreToolUse
+    .flatMap((g) => g.hooks || [])
+    .filter((h) => String(h.command || '').includes('block-secrets.js'));
+  existentes.forEach((h) => {
+    if (h.command !== comandoHook) {
+      h.command = comandoHook;
+      atualizou = true;
+    }
+  });
+  const tinhaHook = existentes.length > 0;
   if (!tinhaHook) {
     s.hooks.PreToolUse.unshift({
       matcher: MATCHER,
@@ -85,7 +110,7 @@ function aplicarSettings(arquivo, comandoHook) {
   const novas = s.permissions.deny.length - antes;
   console.log(
     '  settings  ' + arquivo +
-    (tinhaHook ? ' (hook ja estava)' : ' (hook instalado)') +
+    (!tinhaHook ? ' (hook instalado)' : atualizou ? ' (hook atualizado)' : ' (hook ja estava)') +
     (novas > 0 ? ', +' + novas + ' regras deny' : '')
   );
 }
@@ -124,7 +149,7 @@ function instalarNoUser() {
   console.log('  hook      ' + destino);
   aplicarSettings(
     path.join(os.homedir(), '.claude', 'settings.json'),
-    'node "$HOME/.claude/hooks/block-secrets.js"'
+    comandoDoHook('$HOME/.claude/hooks/block-secrets.js')
   );
 }
 
@@ -137,7 +162,7 @@ if (!fs.existsSync(HOOK_ORIGEM)) {
 console.log('==> blindagem de segredos');
 aplicarSettings(
   path.join(RAIZ, '.claude', 'settings.json'),
-  'node "$CLAUDE_PROJECT_DIR/.claude/hooks/block-secrets.js"'
+  comandoDoHook('$CLAUDE_PROJECT_DIR/.claude/hooks/block-secrets.js')
 );
 aplicarGitignore();
 if (TAMBEM_USER) instalarNoUser();
