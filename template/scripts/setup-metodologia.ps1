@@ -1,43 +1,32 @@
-# Instala a metodologia deste projeto: plugins de skills + blindagem de segredos.
-# Idempotente: rodar de novo nao duplica nada.
-#
-# Uso:  .\scripts\setup-metodologia.ps1 [-User]
-#
-#   -User  instala o hook de segredos tambem em ~/.claude/, valendo para
-#          qualquer repositorio desta maquina
-#
-# Os plugins tambem sao declarados em .claude\settings.json, entao o Claude Code
-# ja os instala ao abrir o projeto. Este script serve para maquina nova sem
-# sessao aberta, para CI, e para conferir o estado.
+# Instala as travas Claude/Codex antes dos plugins opcionais. Migracao 2026-10-21.
+# -User instala o hook Codex no usuario; sem ele usa o projeto.
 param([switch]$User)
-
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
-
-Write-Host "==> marketplace israel (IsraelAzevedoFabiano/skills)"
-claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project
-
-Write-Host "==> plugins"
-claude plugin install mattpocock-skills@claude-plugins-official --scope project
-claude plugin install israel-skills@israel --scope project
-
-Write-Host ""
 if ($User) { node scripts/aplicar-blindagem.js --user } else { node scripts/aplicar-blindagem.js }
-
-Write-Host ""
-Write-Host "==> conferindo o bloqueio de segredos"
+if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar travas Claude" }
+if ($User) { node scripts/install-codex-hooks.js --user } else { node scripts/install-codex-hooks.js --project . }
+if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar travas Codex" }
 node .claude/hooks/test.js
-
-Write-Host ""
-claude plugin list
-
-Write-Host @"
-
-Falta o bootstrap por repositorio. Em uma sessao do Claude Code, nesta ordem:
-
-  1. /setup-matt-pocock-skills
-  2. /grill-with-docs
-  3. /constituicao
-
-Sao user-invoked: script nenhum dispara. Ver CLAUDE.md.
-"@
+if ($LASTEXITCODE -ne 0) { throw "Falha na regressao Claude" }
+if (Get-Command claude -ErrorAction SilentlyContinue) {
+  claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao configurar marketplace Claude" }
+  claude plugin install mattpocock-skills@claude-plugins-official --scope project
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar mattpocock-skills no Claude" }
+  claude plugin install israel-skills@israel --scope project
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar israel-skills no Claude" }
+  claude plugin list
+} else { Write-Host "Claude CLI ausente; travas preparadas, plugins Claude nao instalados." }
+if (Get-Command codex -ErrorAction SilentlyContinue) {
+  codex plugin marketplace add IsraelAzevedoFabiano/skills
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao configurar marketplace israel no Codex" }
+  codex plugin marketplace add anthropics/claude-plugins-official
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao configurar marketplace oficial no Codex" }
+  codex plugin add israel-skills@israel
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar israel-skills no Codex" }
+  codex plugin add mattpocock-skills@claude-plugins-official
+  if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar mattpocock-skills no Codex" }
+} else { Write-Host "Codex CLI ausente; travas preparadas, plugins Codex nao instalados." }
+Write-Host "Codex: abra /hooks e revise a confianca antes de contar com o bloqueio."
+Write-Host "Bootstrap humano: /setup-matt-pocock-skills, /grill-with-docs, /constituicao."
