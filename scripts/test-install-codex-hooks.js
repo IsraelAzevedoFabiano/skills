@@ -48,10 +48,10 @@ const terminal = process.platform === 'win32'
   ? path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe') : '/bin/sh';
 const rodar = comando => spawnSync(terminal,
   process.platform === 'win32' ? ['-NoProfile', '-Command', comando] : ['-c', comando],
-  { input: payload, encoding: 'utf8', env: { ...process.env, PATH: '' }, timeout: 10000 });
+  { input: payload, encoding: 'utf8', env: { ...process.env, PATH: '' }, timeout: 30000 });
 const comando = process.platform === 'win32' ? handler.commandWindows : handler.command;
 const semPath = rodar(comando);
-assert.equal(semPath.status, 0, semPath.stderr);
+assert.equal(semPath.status, 0, semPath.error?.message || semPath.stderr);
 assert.equal(JSON.parse(semPath.stdout).hookSpecificOutput.permissionDecision, 'deny');
 const scriptInstalado = path.join(pasta, 'hooks/israel-skills/block-secrets.js');
 const comandoQuebrado = comando.split(scriptInstalado).join(scriptInstalado + '.ausente')

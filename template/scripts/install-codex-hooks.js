@@ -71,7 +71,7 @@ function instalar(diretorioCodex) {
     hooks: [{
       type: 'command',
       ...comandosDoHook(script),
-      timeout: 10,
+      timeout: 30,
       statusMessage: STATUS,
     }],
   };
