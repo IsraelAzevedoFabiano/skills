@@ -1,0 +1,5 @@
+interface:
+  display_name: "Conduzir lote"
+  short_description: "Conduz um lote de issues em sessões vinculadas a partir de um chat principal"
+policy:
+  allow_implicit_invocation: false

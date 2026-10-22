@@ -1,7 +1,7 @@
 {
   "name": "israel-skills",
-  "version": "1.0.0",
-  "description": "Governança para o fluxo do mattpocock-skills: escreve a constituição do projeto a partir da conversa e confere spec, tíquetes, plano e diff contra ela.",
+  "version": "1.1.0",
+  "description": "Governança e condução para o fluxo do mattpocock-skills: escreve a constituição do projeto a partir da conversa, confere spec, tíquetes, plano e diff contra ela, e conduz um lote de issues em sessões vinculadas a partir de um chat principal.",
   "author": {
     "name": "Israel Azevedo Fabiano"
   },
@@ -12,10 +12,12 @@
     "governanca",
     "constituicao",
     "spec-driven",
-    "engineering"
+    "engineering",
+    "orquestracao"
   ],
   "skills": [
     "./skills/governanca/constituicao",
-    "./skills/governanca/conformidade"
+    "./skills/governanca/conformidade",
+    "./skills/orquestracao/conduzir-lote"
   ]
 }

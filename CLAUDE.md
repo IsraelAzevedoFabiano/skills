@@ -1,7 +1,7 @@
 # Manutenção deste repo
 
-Duas skills de governança, distribuídas como plugin do Claude Code, para usar ao lado do
-`mattpocock-skills`, mais o `template/` que `scripts/init-project.*` semeia num projeto novo. Ver
+Duas skills de governança e uma de condução de lote, distribuídas como plugin do Claude Code, para
+usar ao lado do `mattpocock-skills`, mais o `template/` que `scripts/init-project.*` semeia num projeto novo. Ver
 [README.md](./README.md) para o que fazem e como instalar.
 
 Duas coisas distintas moram aqui, e a diferença importa:

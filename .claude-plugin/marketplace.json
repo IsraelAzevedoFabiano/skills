@@ -9,7 +9,7 @@
     {
       "name": "israel-skills",
       "source": "./",
-      "description": "Constituição do projeto derivada da conversa, e o portão que a confere contra spec, tíquetes, plano e diff.",
+      "description": "Constituição do projeto derivada da conversa, o portão que a confere contra spec, tíquetes, plano e diff, e a condução de um lote de issues a partir de um chat principal.",
       "category": "engineering",
       "keywords": [
         "governanca",
