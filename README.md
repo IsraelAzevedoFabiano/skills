@@ -1,6 +1,6 @@
 # Skills e travas compartilhadas
 
-Duas skills próprias, para usar **ao lado** do [`mattpocock-skills`](https://github.com/mattpocock/skills).
+Três skills próprias, para usar **ao lado** do [`mattpocock-skills`](https://github.com/mattpocock/skills).
 
 O conjunto do Matt dá o fluxo de trabalho: entrevista, spec, tíquetes, implementação, revisão. O que
 ele não tem é **constituição** — o documento que prevalece sobre spec, plano e prompt, e que só se
@@ -11,6 +11,7 @@ pega só a peça que falta e a encaixa no fluxo do Matt.
 |---|---|---|
 | `/constituicao` | só você digita | Escreve ou emenda `CONSTITUTION.md` **a partir da conversa atual**. Sem entrevista. |
 | `conformidade-constitucional` | você ou o agente | Confere spec, tíquetes, plano ou diff contra a constituição, princípio por princípio. |
+| `/conduzir-lote` | só você digita | Conduz um lote de issues em sessões vinculadas, com você falando só com o chat principal. |
 
 A segunda é a que faz a coisa funcionar. Uma constituição que ninguém confere é um arquivo bonito;
 `conformidade-constitucional` é model-invoked, com gatilhos que casam com escrever spec, derivar
@@ -157,6 +158,24 @@ vagueza, não especificidade.
 Detalhe do formato que quase todo mundo erra: o **relatório de impacto** no topo do arquivo é
 material de trabalho para revisão humana e **sai antes do commit**. Não é histórico — o histórico é
 o git. Relatórios empilhados de emendas antigas são lixo que empurra o documento para baixo.
+
+## Conduzir um lote
+
+`/conduzir-lote` serve ao Claude Code no app desktop, que abre sessões vinculadas a uma sessão
+principal. A sessão em que você digita o comando é a **gerente**; as que ela abre são as
+**frentes**, uma por grupo de issues e por MR.
+
+- **Um chat só.** A frente fala só com a gerente, e você fala só com a gerente. Dúvida, pedido de
+  comando e decisão chegam a você no chat principal.
+- **Planejar antes de abrir.** Grupos, ordem, costuras de teste, dúvidas previsíveis e autorizações
+  se acordam com você antes de a primeira frente abrir. Costura confirmada é o que deixa a frente
+  rodar a skill `tdd` sem parar para perguntar.
+- **Dúvida antes do MR.** A frente implementa tudo o que pode, passa pelas revisões, traz as dúvidas
+  à gerente e só abre o MR com as respostas. A decisão fica na descrição do MR, ou em ADR quando
+  vale além dele.
+- **O ciclo se confere no registro.** `scripts/conferir-ciclo.js` lê os registros da frente e diz
+  quais skills ela chamou de fato; `scripts/simular-merges.js` mostra os conflitos da ordem de merge
+  antes de ela acontecer.
 
 ## Desenvolver localmente
 
