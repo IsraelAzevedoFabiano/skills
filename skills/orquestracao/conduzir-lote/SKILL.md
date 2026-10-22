@@ -98,7 +98,9 @@ O sinal para a frente em espera sai depois da revisão da frente de que ela depe
 3. **A esteira.** A pipeline do MR. Job que caiu por rede (conexão cortada, registro fora do ar)
    roda de novo; falha de código volta à frente.
 4. **Os conflitos.** `node <pasta desta skill>/scripts/simular-merges.js origin/<base> <ref> ...`, na
-   ordem de merge proposta, com os MRs abertos de fora do lote que tocam os mesmos arquivos.
+   ordem de merge proposta, com os MRs abertos de fora do lote que tocam os mesmos arquivos. O
+   roteiro para no primeiro conflito, porque o que vem depois depende da resolução: para ver os
+   seguintes, rode de novo sem a ref que conflitou, ou depois que ela for resolvida.
 
 Concluído quando o ciclo está completo, o diff lido, a pipeline verde e os conflitos conhecidos.
 Então apresente ao usuário: o que o MR faz, as decisões dele aplicadas, suas observações sem

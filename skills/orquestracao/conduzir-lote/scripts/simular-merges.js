@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Simula, sem tocar no working tree nem criar branch, os merges de varias refs sobre uma base, na
-// ordem dada, e diz quais conflitam e em que arquivos. Cada merge se aplica sobre o resultado do
+// ordem dada, e diz qual conflita e em que arquivos. Cada merge se aplica sobre o resultado do
 // anterior, como os merges de verdade vao se aplicar.
+//
+// Para no primeiro conflito: a arvore de um merge conflitante traz os marcadores de conflito, e o
+// que vem depois depende de como ele for resolvido. As refs seguintes saem como nao simuladas.
 //
 // Uso (dentro do clone): node simular-merges.js <base> <ref1> <ref2> ...
 // Exemplo: node simular-merges.js origin/homol origin/mr-a origin/mr-b
@@ -31,8 +34,7 @@ if (!base || refs.length === 0) {
 }
 
 let acumulado = revisao(base);
-let algumConflito = false;
-for (const ref of refs) {
+for (const [posicao, ref] of refs.entries()) {
   const commit = revisao(ref);
   const r = git(['merge-tree', '--write-tree', '--name-only', acumulado, commit]);
   if (r.status !== 0 && r.status !== 1) {
@@ -41,19 +43,19 @@ for (const ref of refs) {
   }
   // Saida: a arvore na primeira linha; com conflito, os arquivos ate a primeira linha vazia.
   const linhas = r.stdout.split('\n');
-  const arvore = linhas[0].trim();
   if (r.status === 1) {
-    algumConflito = true;
     const arquivos = [];
     for (const linha of linhas.slice(1)) {
       if (!linha.trim()) break;
       arquivos.push(linha.trim());
     }
     console.log(`${ref}: CONFLITO em ${arquivos.join(', ')}`);
-  } else {
-    console.log(`${ref}: limpo`);
+    for (const seguinte of refs.slice(posicao + 1)) {
+      console.log(`${seguinte}: nao simulada, depende de como ${ref} for resolvida`);
+    }
+    process.exit(1);
   }
-  // O proximo merge parte deste resultado, com ou sem conflito, para a ordem valer como na vida real.
-  acumulado = git(['commit-tree', arvore, '-p', acumulado, '-p', commit, '-m', 'simulacao']).stdout.trim();
+  console.log(`${ref}: limpo`);
+  // O proximo merge parte deste resultado, para a ordem valer como na vida real.
+  acumulado = git(['commit-tree', linhas[0].trim(), '-p', acumulado, '-p', commit, '-m', 'simulacao']).stdout.trim();
 }
-process.exit(algumConflito ? 1 : 0);
