@@ -121,7 +121,9 @@ bloqueio e os conflitos previstos, com a ordem de merge.
 - O usuário faz cada merge, na ordem proposta. Depois de cada um, os MRs abertos do lote ficam sem
   conflito com a base atual, conferido no tracker: a frente traz a base, roda as conferências e
   empurra. MR que ainda não tem a esteira nova da base precisa dela na própria branch, porque o
-  tracker lê a configuração da esteira na branch do MR.
+  tracker lê a configuração da esteira na branch do MR. Sem conflito não basta: o MR só volta a
+  pronto com a pipeline verde rodada sobre a base atual, porque um merge pode trazer job ou regra
+  nova que reprova o código dos outros MRs.
 - Antes de dar o lote por fechado, cada MR aberto tem a revisão externa do commit atual (o SHA que a
   nota cita), e cada apontamento dela foi tratado. Revisão que ainda não chegou ou cita commit
   antigo: diga ao usuário que ela falta.
