@@ -105,7 +105,14 @@ O sinal para a frente em espera sai depois da revisão da frente de que ela depe
    roteiro para no primeiro conflito, porque o que vem depois depende da resolução: para ver os
    seguintes, rode de novo sem a ref que conflitou, ou depois que ela for resolvida.
 
-Concluído quando o ciclo está completo, o diff lido, a pipeline verde e os conflitos conhecidos.
+5. **As revisões externas.** Revisão que outro agente ou pessoa posta no MR (o Codex, por exemplo),
+   mesmo com o MR em rascunho: leia as notas novas a cada aviso de frente. Apontamento que procede
+   vai à frente, com a nota citada; o que muda uma decisão do usuário vai a ele primeiro. MR com
+   apontamento aberto volta ao rascunho até a correção. A frente responde na própria nota com o
+   commit da correção.
+
+Concluído quando o ciclo está completo, o diff lido, a pipeline verde, os conflitos conhecidos e cada
+apontamento externo respondido.
 Então apresente ao usuário: o que o MR faz, as decisões dele aplicadas, suas observações sem
 bloqueio e os conflitos previstos, com a ordem de merge.
 
@@ -115,5 +122,8 @@ bloqueio e os conflitos previstos, com a ordem de merge.
   conflito com a base atual, conferido no tracker: a frente traz a base, roda as conferências e
   empurra. MR que ainda não tem a esteira nova da base precisa dela na própria branch, porque o
   tracker lê a configuração da esteira na branch do MR.
+- Antes de dar o lote por fechado, cada MR aberto tem a revisão externa do commit atual (o SHA que a
+  nota cita), e cada apontamento dela foi tratado. Revisão que ainda não chegou ou cita commit
+  antigo: diga ao usuário que ela falta.
 - Comentário na issue que o critério de aceite pede (placar, decisão) sai com o sim do usuário.
 - Frente se arquiva com o sim do usuário.
