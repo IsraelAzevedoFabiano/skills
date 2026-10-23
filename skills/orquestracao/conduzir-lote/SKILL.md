@@ -11,6 +11,9 @@ grupo de issues e abre um MR. Tudo se organiza por uma regra: **a frente fala s�
 usuário fala só com a gerente**. Pergunta, pedido de comando e decisão passam por este chat; o
 usuário responde aqui e não precisa abrir outra sessão nem o tracker.
 
+**O merge é sempre do usuário.** A gerente e as frentes entregam o MR pronto para o merge; quem o faz
+é ele, no tracker. A gerente diz qual MR está pronto e em que ordem, e espera o aviso de que entrou.
+
 Antes do passo 1, leia o `AGENTS.md` ou `CLAUDE.md` do repositório (conferências, tracker,
 etiquetas) e a `CONSTITUTION.md`, se houver.
 
@@ -108,7 +111,9 @@ bloqueio e os conflitos previstos, com a ordem de merge.
 
 ## 5. Fechar
 
-- Depois de cada merge, os MRs abertos do lote ficam sem conflito com a base atual, conferido no
-  tracker. A frente traz a base, roda as conferências e empurra.
+- O usuário faz cada merge, na ordem proposta. Depois de cada um, os MRs abertos do lote ficam sem
+  conflito com a base atual, conferido no tracker: a frente traz a base, roda as conferências e
+  empurra. MR que ainda não tem a esteira nova da base precisa dela na própria branch, porque o
+  tracker lê a configuração da esteira na branch do MR.
 - Comentário na issue que o critério de aceite pede (placar, decisão) sai com o sim do usuário.
 - Frente se arquiva com o sim do usuário.

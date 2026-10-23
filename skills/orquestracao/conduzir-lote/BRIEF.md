@@ -34,6 +34,7 @@ tracker>`. O MR vai para `<base do tracker>` e a descrição diz que depende do 
   observa o comportamento>.
 - **Decisões**: <cada uma, com a resposta>.
 - **Autorização do usuário, nas palavras dele**: "<frase literal>".
+- **O merge é do usuário.** Você entrega o MR pronto para o merge, e ele o faz.
 
 ## O ciclo
 
