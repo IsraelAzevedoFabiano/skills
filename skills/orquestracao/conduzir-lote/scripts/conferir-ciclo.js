@@ -51,6 +51,7 @@ function conferir({ pasta, branch, exigir }) {
   const vistos = new Set();
   const skills = [];
   const subagentes = [];
+  const branchesVistas = new Set();
   for (const arquivo of arquivosJsonl(registros)) {
     for (const linha of fs.readFileSync(arquivo, 'utf8').split('\n')) {
       if (!linha.trim()) continue;
@@ -60,6 +61,7 @@ function conferir({ pasta, branch, exigir }) {
       } catch {
         continue;
       }
+      if (entrada.gitBranch) branchesVistas.add(entrada.gitBranch);
       if (branch && entrada.gitBranch !== branch) continue;
       const conteudo = entrada.message?.content;
       if (!Array.isArray(conteudo)) continue;
@@ -84,6 +86,12 @@ function conferir({ pasta, branch, exigir }) {
   for (const s of skills) console.log(`  ${s.skill}  ${resumir(s.args, 120)}  [${s.sessao}]`);
   console.log(`\nSubagentes (${subagentes.length}):`);
   for (const a of subagentes) console.log(`  ${resumir(a.descricao, 80)} (${a.modelo})  [${a.sessao}]`);
+
+  // O filtro casa com a branch local do worktree, que pode ter outro nome que a branch do MR.
+  if (branch && !branchesVistas.has(branch)) {
+    console.log(`\nNenhum registro na branch ${branch}. Branches nos registros: ${[...branchesVistas].join(', ')}`);
+    process.exit(2);
+  }
 
   const chamadas = new Set(skills.map((s) => s.skill));
   const faltam = exigir.filter((nome) => !chamadas.has(nome));

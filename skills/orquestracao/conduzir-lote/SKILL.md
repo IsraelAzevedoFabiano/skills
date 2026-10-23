@@ -90,7 +90,7 @@ O sinal para a frente em espera sai depois da revisão da frente de que ela depe
 ## 4. Revisar cada MR
 
 1. **O ciclo rodou.** `node <pasta desta skill>/scripts/conferir-ciclo.js <pasta do worktree da
-   frente> --branch <branch> --exigir mattpocock-skills:tdd,mattpocock-skills:code-review,israel-skills:conformidade-constitucional`
+   frente> --branch <branch local do worktree> --exigir mattpocock-skills:tdd,mattpocock-skills:code-review,israel-skills:conformidade-constitucional`
    (mais `security-review` quando o brief a pede) lista as skills chamadas, com os argumentos, e os
    subagentes, com o modelo. Skill exigida que falta volta à frente, com o nome da que falta.
 2. **O diff** contra a base, lido por você. Arquivo de outra branch se lê com
