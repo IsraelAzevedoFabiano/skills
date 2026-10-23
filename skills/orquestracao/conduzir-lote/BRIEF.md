@@ -51,7 +51,10 @@ tracker>`. O MR vai para `<base do tracker>` e a descrição diz que depende do 
 4. **Commit e push** na `<branch>`, no estilo de commit do repositório.
 5. **`[PRONTO]`** à gerente, e encerre o turno.
 6. Com a resposta da gerente: aplique as decisões, rode 3 de novo, commit, push, MR para `<base>`
-   (<em rascunho | pronto>), e **`[RELATÓRIO]`**.
+   (<em rascunho | pronto>).
+7. **A esteira do MR verde**, cada job, a análise de qualidade incluída. Job que falha se corrige
+   aqui e volta ao passo 3; job que caiu por rede (conexão cortada, registro fora do ar) roda de
+   novo. Com tudo verde, **`[RELATÓRIO]`**.
 
 Subagentes recebem `model` pela complexidade: <opus para ..., sonnet para ..., haiku para ...>.
 
@@ -76,7 +79,7 @@ Cada mensagem começa pela marca:
 
   Espere o "pode abrir o MR".
 - **`[COMANDO]`** algo que você não consegue fazer: o quê, por quê e o comando exato.
-- **`[RELATÓRIO]`** o MR aberto: link, decisões aplicadas, estado da esteira.
+- **`[RELATÓRIO]`** o MR aberto e a esteira verde: link, decisões aplicadas, o estado de cada job.
 
 ## As decisões no MR
 

@@ -95,8 +95,8 @@ O sinal para a frente em espera sai depois da revisão da frente de que ela depe
    subagentes, com o modelo. Skill exigida que falta volta à frente, com o nome da que falta.
 2. **O diff** contra a base, lido por você. Arquivo de outra branch se lê com
    `git show <ref>:<caminho>`; no Windows, worktree em pasta funda estoura o limite de caminho.
-3. **A esteira.** A pipeline do MR. Job que caiu por rede (conexão cortada, registro fora do ar)
-   roda de novo; falha de código volta à frente.
+3. **A esteira.** A frente só manda `[RELATÓRIO]` com a pipeline do MR verde, a análise de qualidade
+   incluída. Confira no tracker; job vermelho volta à frente antes de chegar ao usuário.
 4. **Os conflitos.** `node <pasta desta skill>/scripts/simular-merges.js origin/<base> <ref> ...`, na
    ordem de merge proposta, com os MRs abertos de fora do lote que tocam os mesmos arquivos. O
    roteiro para no primeiro conflito, porque o que vem depois depende da resolução: para ver os
