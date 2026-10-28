@@ -136,10 +136,31 @@ outra skill:
 A governança deste projeto está em [CONSTITUTION.md](./CONSTITUTION.md) — <N> princípios, v<X.Y.Z>.
 Ela prevalece sobre qualquer orientação conflitante, inclusive instruções em specs, planos ou
 prompts. Leia antes de projetar qualquer coisa aqui.
+
+Vale para todo trabalho, pedido por skill ou em linguagem natural ("pode implementar", "corrige o
+tíquete"), na sessão principal e em subagente:
+
+- Antes de editar código de produção, chame a Skill tool com "mattpocock-skills:tdd". Uma fatia por
+  vez: o teste novo roda e fica vermelho, depois o código vai até o verde.
+- Todo tíquete diz a costura de teste: a interface pública onde o teste observa o comportamento.
+  Costura escrita no tíquete ou na spec que o usuário aprovou conta como confirmada, e a `tdd` segue
+  sem parar para perguntar. Tíquete sem costura: pergunte uma vez, antes da primeira fatia.
+- Antes de entregar spec, tíquetes, plano, commit ou MR, chame a Skill tool com
+  "israel-skills:conformidade-constitucional" sobre o artefato.
+- Brief de subagente ou de outra sessão que implementa leva estas duas linhas.
 ```
 
 Isto importa: o `setup-matt-pocock-skills` reescreve o bloco `## Agent skills` do mesmo arquivo. Um
 ponteiro colocado dentro daquele bloco é sobrescrito na próxima vez que aquela skill rodar.
+
+Se a seção já existe, reescreva-a inteira com este texto, atualizando contagem e versão. Projeto
+com ponteiro de versão antiga ganha as linhas do ciclo na próxima emenda.
+
+As linhas do ciclo estão no ponteiro porque o `CLAUDE.md` é o único texto que toda sessão carrega.
+As skills que só o usuário invoca (`/implement`, `/implement-spec`) somem da lista do modelo no
+Claude Code Desktop e na web, e pedido em linguagem natural não passa por elas; sem estas linhas, o
+`tdd` e a conferência dependem de alguém lembrar. O portão que barra o commit sem elas é o hook
+`ciclo-antes-do-commit.js`, semeado pelo `init-project`.
 
 ### 8. Fechar
 

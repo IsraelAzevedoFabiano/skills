@@ -1,6 +1,6 @@
 ---
 name: conformidade-constitucional
-description: "Confere uma spec, um conjunto de tiquetes, um plano ou um diff contra a CONSTITUTION.md do repositorio, principio por principio, e diz o que viola e quais sao as duas saidas. Use ao escrever uma spec, ao quebrar trabalho em tiquetes, ao planejar ou revisar implementacao, e sempre que a conversa citar constituicao, principio, governanca, ou perguntar se algo e permitido neste projeto."
+description: "Confere uma spec, um conjunto de tiquetes, um plano ou um diff contra a CONSTITUTION.md do repositorio, principio por principio, e diz o que viola e quais sao as duas saidas. Use ao escrever uma spec, ao quebrar trabalho em tiquetes, ao planejar, ao implementar ou corrigir um tiquete ou issue, antes de commit, push ou de abrir MR/PR, ao revisar codigo, e sempre que a conversa citar constituicao, principio, governanca, ou perguntar se algo e permitido neste projeto."
 ---
 
 # Conformidade constitucional
@@ -19,6 +19,10 @@ conferir. (A skill `/constituicao` cria uma quando o usuário quiser.)
 O que estiver em jogo agora: uma spec sendo escrita, um conjunto de tíquetes sendo derivado, um plano
 de implementação, um diff, ou uma decisão de desenho em discussão. Se não estiver claro qual, use o
 mais recente da conversa. Não peça ao usuário para escolher quando o contexto já diz.
+
+Durante uma implementação, o artefato é o diff contra a base (`git diff <base>...`, mais o que não
+foi commitado). Rode antes de cada commit que leva código: o portão do projeto, quando instalado,
+nega o commit sem esta conferência na sessão.
 
 ## Processo
 

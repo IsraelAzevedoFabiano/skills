@@ -38,8 +38,8 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Destino "scripts") | Out-N
 Copy-Item -Force -Path (Join-Path $template ".claude\hooks\*") -Destination (Join-Path $Destino ".claude\hooks")
 Copy-Item -Force -Path (Join-Path $template ".codex\hooks\*") -Destination (Join-Path $Destino ".codex\hooks")
 Copy-Item -Force -Path (Join-Path $template "scripts\*") -Destination (Join-Path $Destino "scripts")
-Write-Host "  .claude\hooks\  block-secrets.js, casos.txt, test.js"
-Write-Host "  scripts\        aplicar-blindagem.js, setup-metodologia.sh, setup-metodologia.ps1"
+Write-Host "  .claude\hooks\  block-secrets.js, casos.txt, test.js, ciclo-antes-do-commit.js, test-ciclo.js"
+Write-Host "  scripts\        aplicar-blindagem.js, aplicar-ciclo.js, setup-metodologia.sh, setup-metodologia.ps1"
 
 Write-Host ""
 Set-Location $Destino

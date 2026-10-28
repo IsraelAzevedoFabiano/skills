@@ -81,8 +81,27 @@ Depois, o ciclo de trabalho de sempre:
 /grill-with-docs → /to-spec → /to-tickets → /implement → /code-review
 ```
 
-`conformidade-constitucional` entra sozinha ao longo desse ciclo, porque os gatilhos dela casam com
-o que essas skills estão fazendo.
+`conformidade-constitucional` e `tdd` **não** entram sozinhas com confiança. Os gatilhos da
+descrição aumentam a chance, não garantem, e as sessões mostraram o padrão: implementação pedida em
+linguagem natural ("pode implementar os tíquetes") não carrega nenhuma das duas. No Claude Code
+Desktop e na web é pior, porque as skills user-invoked (`/implement`, `/implement-spec`,
+`/to-spec`, `/constituicao`) somem da lista do modelo, e o `tdd` que o `/implement` chamaria nunca
+é chamado.
+
+Por isso, duas camadas:
+
+1. **Instrução no `CLAUDE.md`.** O ponteiro que a `/constituicao` escreve em `## Constituição`
+   manda chamar `tdd` antes de editar código e `conformidade-constitucional` antes de entregar spec,
+   tíquetes, plano, commit ou MR. É o único texto que toda sessão carrega.
+2. **Portão no commit.** O hook `.claude/hooks/ciclo-antes-do-commit.js`, que o `init-project`
+   instala, nega o `git commit` que leva código quando a sessão não chamou `tdd`, quando editou
+   código de produção antes de chamá-la, ou, havendo `CONSTITUTION.md`, quando não chamou a
+   conferência. A negação diz o que falta; o agente roda e tenta de novo.
+
+O portão lê a transcrição da sessão e das subagentes dela. Ele não vê edição feita por Bash
+(`sed`, heredoc) para conferir a ordem, e só existe no Claude Code. Caminho que não é código para
+o projeto (infra, dados) vai em `.claude/ciclo.json`, `{ "ignorar": ["^infra/"] }`, decisão do
+dono do projeto. Projeto já semeado recebe o portão rodando o `init-project` de novo.
 
 ## Blindagem de segredos
 
