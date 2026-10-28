@@ -10,7 +10,8 @@
 //   1. `tdd` foi chamada em algum ponto da sessao.
 //   2. Desde o ultimo commit, a primeira edicao de codigo (Edit/Write fora de teste) veio depois
 //      da primeira chamada da `tdd`. Codigo antes do teste e o defeito que este hook existe para
-//      pegar. Depois de uma negacao, chamar a `tdd` de novo e refazer a fatia libera.
+//      pegar. Depois de uma negacao, libera quando a `tdd` e chamada de novo e o codigo de producao
+//      e reescrito (Edit/Write) depois dela.
 //   3. `conformidade-constitucional` foi chamada, se ha CONSTITUTION.md na raiz.
 //
 // Sem transcricao legivel, sem git ou com entrada estranha, libera: o hook nao julga o que nao ve.
@@ -129,6 +130,34 @@ function eventos(arquivo) {
   return lista;
 }
 
+// Opcoes do git commit que consomem o argumento seguinte; o resto que nao comeca com '-' e caminho.
+const COM_VALOR = new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--reuse-message',
+  '--reedit-message', '--template', '--author', '--date', '--fixup', '--squash', '--cleanup', '--trailer',
+  '--pathspec-from-file']);
+
+// O que o comando de commit leva alem do indice: tudo (-a) e os caminhos que ele nomeia.
+function alvosDoCommit(comando) {
+  const depois = comando.slice(comando.search(COMMIT)).replace(COMMIT, '');
+  const fim = depois.search(/&&|\|\||[;|\n]/);
+  const trecho = fim === -1 ? depois : depois.slice(0, fim);
+  const tokens = [...trecho.matchAll(/"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+  let todos = false;
+  const caminhos = [];
+  for (let i = 0, soCaminho = false; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (soCaminho) caminhos.push(t);
+    else if (t === '--') soCaminho = true;
+    else if (t === '--all') todos = true;
+    else if (/^-[a-zA-Z]+$/.test(t)) {
+      if (t.includes('a')) todos = true;
+      if (/[mFCct]$/.test(t)) i++; // -am "msg": a ultima letra pede valor
+    } else if (t.startsWith('-')) {
+      if (COM_VALOR.has(t)) i++;
+    } else caminhos.push(t);
+  }
+  return { todos, caminhos };
+}
+
 function transcricoes(principal) {
   const todas = [principal];
   const subagentes = path.join(principal.replace(/\.jsonl$/, ''), 'subagents');
@@ -146,15 +175,19 @@ function codigoAntesDoTeste(lista, raiz, ignorar) {
   const inicio = lista.map((e) => e.tipo).lastIndexOf('commit') + 1;
   const escopo = lista.slice(inicio);
   const primeiraTdd = escopo.findIndex((e) => e.tipo === 'skill' && e.nome === 'tdd');
-  const primeiroCodigo = escopo.findIndex((e) => {
+  const ehProducao = (e) => {
     if (e.tipo !== 'edicao' || !e.arquivo) return false;
     const rel = relativo(raiz, e.arquivo);
     return ehCodigo(rel, ignorar) && !TESTE.test(rel);
-  });
+  };
+  const primeiroCodigo = escopo.findIndex(ehProducao);
   if (primeiroCodigo === -1 || primeiraTdd === -1 || primeiraTdd < primeiroCodigo) return false;
+  // Refeito: depois da ultima negacao, a `tdd` foi chamada e o codigo de producao foi reescrito
+  // depois dela. Chamar a `tdd` e commitar o mesmo codigo nao conta.
   const ultimaNegacao = escopo.map((e) => e.tipo).lastIndexOf('negacao');
-  const ultimaTdd = escopo.map((e) => e.tipo === 'skill' && e.nome === 'tdd').lastIndexOf(true);
-  return !(ultimaNegacao !== -1 && ultimaTdd > ultimaNegacao);
+  if (ultimaNegacao === -1) return true;
+  const tddDepois = escopo.findIndex((e, i) => i > ultimaNegacao && e.tipo === 'skill' && e.nome === 'tdd');
+  return tddDepois === -1 || !escopo.some((e, i) => i > tddDepois && ehProducao(e));
 }
 
 function conferir(entrada) {
@@ -166,9 +199,19 @@ function conferir(entrada) {
   const cwd = entrada.cwd || process.cwd();
   const raiz = linhas(git(cwd, ['rev-parse', '--show-toplevel']))[0];
   const ignorar = lerIgnorar(raiz);
+  const { todos, caminhos } = alvosDoCommit(comando);
   const mudados = new Set(linhas(git(raiz, ['diff', '--cached', '--name-only'])));
-  if (/\s(?:-[a-zA-Z]*a[a-zA-Z]*|--all)\b/.test(comando)) {
-    linhas(git(raiz, ['diff', '--name-only'])).forEach((f) => mudados.add(f));
+  if (todos) linhas(git(raiz, ['diff', '--name-only'])).forEach((f) => mudados.add(f));
+  // `git commit <caminho>` leva o que esta na arvore de trabalho daquele caminho, indexado ou nao.
+  if (caminhos.length) {
+    let doCaminho;
+    try {
+      doCaminho = git(cwd, ['diff', 'HEAD', '--name-only', '--', ...caminhos]);
+    } catch {
+      // Repositorio sem HEAD (primeiro commit): tudo o que casa o caminho entra.
+      doCaminho = git(cwd, ['ls-files', '--full-name', '--cached', '--others', '--exclude-standard', '--', ...caminhos]);
+    }
+    linhas(doCaminho).forEach((f) => mudados.add(f));
   }
   const codigo = [...mudados].filter((f) => ehCodigo(f, ignorar));
   if (codigo.length === 0) liberar();
@@ -181,8 +224,9 @@ function conferir(entrada) {
       'e construa a mudanca em fatias: teste vermelho, depois o codigo ate o verde.');
   } else if (porArquivo.some((lista) => codigoAntesDoTeste(lista, raiz, ignorar))) {
     faltas.push('Codigo de producao foi editado antes da skill `tdd`. Chame a Skill tool com ' +
-      '"mattpocock-skills:tdd" de novo e refaca a fatia na ordem: guarde o codigo (git stash), rode o ' +
-      'teste novo e mostre o vermelho, devolva o codigo (git stash pop) e mostre o verde.');
+      '"mattpocock-skills:tdd" de novo e refaca a fatia na ordem: descarte a mudanca de producao ' +
+      '(git stash), rode o teste novo e mostre o vermelho, e reescreva o codigo com Edit ou Write ate o ' +
+      'verde. Devolver o codigo antigo (git stash pop) nao conta como refeito.');
   }
   if (fs.existsSync(path.join(raiz, 'CONSTITUTION.md')) && !chamadas.has('conformidade-constitucional')) {
     faltas.push('O projeto tem CONSTITUTION.md e a conferencia nao rodou. Chame a Skill tool com ' +

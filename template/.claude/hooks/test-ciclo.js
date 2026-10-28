@@ -24,7 +24,7 @@ const negado = () => ({ type: 'tool_result', tool_use_id: 'x', is_error: true,
   content: '[ciclo-antes-do-commit] Commit com codigo sem o ciclo completo.' });
 const digitada = (nome) => `<command-name>/${nome}</command-name>`;
 
-function montar({ arquivos, constituicao, ciclo, principal, subagente }) {
+function montar({ arquivos = [], naoIndexados = [], constituicao, ciclo, principal, subagente }) {
   const raiz = fs.mkdtempSync(path.join(os.tmpdir(), 'ciclo-'));
   const g = (...args) => execFileSync('git', args, { cwd: raiz, stdio: 'ignore' });
   g('init', '-q');
@@ -37,7 +37,17 @@ function montar({ arquivos, constituicao, ciclo, principal, subagente }) {
     fs.mkdirSync(path.join(raiz, '.claude'), { recursive: true });
     fs.writeFileSync(path.join(raiz, '.claude', 'ciclo.json'), JSON.stringify(ciclo));
   }
-  g('add', ...arquivos);
+  if (arquivos.length) g('add', ...arquivos);
+  // Caminho commitado e depois alterado sem indexar: so entra no commit se o comando o nomear.
+  if (naoIndexados.length) {
+    for (const arquivo of naoIndexados) {
+      fs.mkdirSync(path.dirname(path.join(raiz, arquivo)), { recursive: true });
+      fs.writeFileSync(path.join(raiz, arquivo), 'x\n');
+    }
+    g('add', ...naoIndexados);
+    g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'base');
+    for (const arquivo of naoIndexados) fs.writeFileSync(path.join(raiz, arquivo), 'y\n');
+  }
 
   const registro = (partes) => partes.map((p) => JSON.stringify(typeof p === 'string'
     ? { type: 'user', message: { role: 'user', content: p } }
@@ -79,9 +89,17 @@ const casos = [
     arquivos: CODIGO, principal: (r) => [edita(teste(r)), skill('tdd'), edita(src(r))] }],
   ['BLOQUEIA', 'codigo antes da tdd', {
     arquivos: CODIGO, principal: (r) => [edita(src(r)), skill('mattpocock-skills:tdd'), edita(teste(r))] }],
-  ['LIBERA', 'codigo antes da tdd, negado, tdd de novo', {
+  ['BLOQUEIA', 'codigo antes da tdd, negado, tdd de novo sem reescrever', {
     arquivos: CODIGO,
     principal: (r) => [edita(src(r)), skill('tdd'), bash('git commit -m x'), negado(), skill('tdd')] }],
+  ['LIBERA', 'codigo antes da tdd, negado, tdd de novo e codigo reescrito', {
+    arquivos: CODIGO,
+    principal: (r) => [edita(src(r)), skill('tdd'), bash('git commit -m x'), negado(), skill('tdd'),
+      edita(teste(r)), edita(src(r))] }],
+  ['BLOQUEIA', 'codigo reescrito antes da tdd pos-negacao', {
+    arquivos: CODIGO,
+    principal: (r) => [edita(src(r)), skill('tdd'), bash('git commit -m x'), negado(), edita(src(r)),
+      skill('tdd')] }],
   ['BLOQUEIA', 'codigo antes da tdd, negado, sem tdd de novo', {
     arquivos: CODIGO,
     principal: (r) => [edita(src(r)), skill('tdd'), bash('git commit -m x'), negado(), edita(teste(r))] }],
@@ -101,6 +119,16 @@ const casos = [
     arquivos: ['infra/deploy.yml'], ciclo: { ignorar: ['^infra/'] }, principal: () => [] }],
   ['BLOQUEIA', 'git -C caminho commit', { arquivos: CODIGO, principal: () => [] }, 'git -C . commit -m x'],
   ['BLOQUEIA', 'PowerShell git.exe commit', { arquivos: CODIGO, principal: () => [] }, 'git.exe commit -m x'],
+  ['BLOQUEIA', 'commit com caminho nao indexado', {
+    naoIndexados: ['src/app.py'], principal: () => [] }, 'git commit src/app.py -m x'],
+  ['BLOQUEIA', 'commit com -- caminho nao indexado', {
+    naoIndexados: ['src/app.py'], principal: () => [] }, 'git commit -m "x" -- src/app.py'],
+  ['LIBERA', 'commit de caminho de doc nao indexado', {
+    naoIndexados: ['README.md', 'src/app.py'], principal: () => [] }, 'git commit -m x README.md'],
+  ['LIBERA', 'caminho citado na mensagem nao conta', {
+    naoIndexados: ['src/app.py'], principal: () => [] }, 'git commit -m "corrige src/app.py"'],
+  ['BLOQUEIA', 'commit -am leva o nao indexado', {
+    naoIndexados: ['src/app.py'], principal: () => [] }, 'git commit -am "x"'],
   ['LIBERA', 'sem transcricao, nao julga', { arquivos: CODIGO, principal: () => [] }, 'git commit -m x', true],
 ];
 
