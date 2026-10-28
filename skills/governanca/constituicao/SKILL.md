@@ -65,7 +65,8 @@ Trabalhe com o que já está no contexto. Depois complete:
 
 - `CONSTITUTION.md`, se existir: é a fonte dos valores atuais e das emendas anteriores. Preserve o
   que continua aplicável.
-- `CONTEXT.md` e `docs/adr/`: use o vocabulário do glossário nos nomes dos princípios. Um ADR que
+- `GLOSSARY.md` (ou `CONTEXT.md`, o nome antigo, em projeto semeado antes do Matt 1.3) e
+  `docs/adr/`: use o vocabulário do glossário nos nomes dos princípios. Um ADR que
   contradiz um princípio candidato é sinal de que um dos dois está errado; traga isso à tona.
 - `CLAUDE.md` / `AGENTS.md`, `README.md`, configuração de lint, de CI e de teste: regras que o
   projeto já impõe estruturalmente são candidatas fortes, porque já são verificáveis.
@@ -111,6 +112,8 @@ expectativa de revisão de conformidade.
 - A linha de versão bate com o relatório de impacto.
 - Datas em ISO.
 - Nenhum princípio vago: cada "deve" virou MUST ou SHOULD com racional.
+- Nenhuma condição aberta: todo "quando", "se" ou "salvo" é lista fechada e verificável, e o corpo
+  de cada princípio exige o que o título promete (Teste 7 do VALIDACAO.md).
 - Nenhum princípio é implementação de feature nem decisão pontual com trade-off.
 
 ### 6. Relatório de impacto

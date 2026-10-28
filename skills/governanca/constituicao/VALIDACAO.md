@@ -31,7 +31,7 @@ quebrou, ou o que quebraria sem a regra.
 |---|---|
 | implementação de uma feature, comportamento de uma tela, contrato de um endpoint | uma spec (`/to-spec`) |
 | uma decisão pontual e o trade-off que a produziu | um ADR (`/grill-with-docs`) |
-| definição de um termo do domínio | o `CONTEXT.md` (`/grill-with-docs`) |
+| definição de um termo do domínio | o `GLOSSARY.md` (`/grill-with-docs`) |
 | preferência de formatação que a ferramenta já impõe | a configuração do linter |
 | passo de um procedimento operacional | a seção de fluxo, não a de princípios |
 
@@ -50,6 +50,26 @@ negociável e o rótulo sai. Se tudo é não-negociável, nada é.
 - Repete uma regra que já está imposta estruturalmente? Não é motivo para cortar — o princípio é o
   porquê, e a estrutura é o como. Mas cite onde a estrutura o impõe, para que a próxima pessoa não
   procure.
+
+## Teste 7: o corpo cumpre o que o título promete?
+
+Uma condição no corpo pode esvaziar a regra sem que ninguém perceba, porque quem lê fica com o
+título. Para cada "quando", "se", "salvo", "exceto" e "sempre que possível", pergunte: quem decide
+se a condição vale? Se é o próprio agente, no momento de obedecer, a regra virou opcional.
+
+- ❌ Título "Teste sempre, e antes (NÃO-NEGOCIÁVEL)", corpo "teste antes do código **quando há
+  contrato a cumprir**". Todo código cumpre algum contrato, ou nenhum: o agente escolhe, e escolhe
+  o caminho curto. Na prática, o teste veio depois.
+- ✅ "Comportamento novo MUST nascer de um teste que roda e falha antes do código de produção. As
+  exceções são estas, e só estas: <lista fechada, cada uma verificável no diff>."
+
+A condição legítima é **fechada e verificável**: uma lista que dá para conferir num diff (arquivo de
+migração gerado, código de protótipo descartável em `prototype/`). Condição aberta ("quando fizer
+sentido", "quando houver contrato", "se for complexo") reprova. Num princípio `(NÃO-NEGOCIÁVEL)`,
+qualquer condição precisa sobreviver a este teste, senão o rótulo é mentira.
+
+Releia o título contra o corpo. Título que promete mais do que o corpo exige reprova, mesmo com
+cada frase do corpo verificável.
 
 ## Especificidade não é defeito
 

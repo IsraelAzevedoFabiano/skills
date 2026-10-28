@@ -61,7 +61,7 @@ Toda pergunta e todo pedido vão à gerente por `SendMessage`, com `to: "<id da 
 responde por ela. A mensagem que fecha o seu turno descreve onde o trabalho está, e as perguntas
 ficam na mensagem à gerente.
 
-Antes de perguntar, procure a resposta na constituição, nos ADRs, no `CONTEXT.md` e no "Decidido com
+Antes de perguntar, procure a resposta na constituição, nos ADRs, no `GLOSSARY.md` e no "Decidido com
 o usuário". Achou: cite a fonte e siga.
 
 Cada mensagem começa pela marca:
@@ -81,5 +81,5 @@ Cada mensagem começa pela marca:
 ## As decisões no MR
 
 A descrição do MR traz a seção "Decisões do usuário": cada dúvida, a resposta e onde ficou
-registrada. Decisão que vale além deste MR vai a ADR ou ao `CONTEXT.md` no próprio MR, como o
+registrada. Decisão que vale além deste MR vai a ADR ou ao `GLOSSARY.md` no próprio MR, como o
 repositório pede. As dúvidas vivem nas mensagens à gerente e, decididas, nessa seção.
