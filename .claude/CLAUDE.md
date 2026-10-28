@@ -35,6 +35,8 @@ Seguir, porque as skills conviverão com as dele na mesma sessão:
 - `claude plugin validate . --strict` passa antes de qualquer push.
 - `node template/.claude/hooks/test.js` passa antes de qualquer push que toque o hook de segredos.
   Padrão novo costuma trazer falso positivo junto, e falso positivo trava trabalho legítimo.
+- `node template/.claude/hooks/test-ciclo.js` passa antes de qualquer push que toque o portão do
+  ciclo. Metade dos casos é liberação: portão que trava commit legítimo é desligado pelo dono.
 - Nada em `template/` depende de caminho deste repo: o conteúdo é copiado literalmente para o
   projeto e roda de lá. Só `node` é pressuposto.
 - `template/scripts/aplicar-blindagem.js` e o `init-project` fazem merge em `settings.json` e
