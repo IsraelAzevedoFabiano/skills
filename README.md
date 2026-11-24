@@ -13,9 +13,10 @@ pega só a peça que falta e a encaixa no fluxo do Matt.
 | `conformidade-constitucional` | você ou o agente | Confere spec, tíquetes, plano ou diff contra a constituição, princípio por princípio. |
 | `/conduzir-lote` | só você digita | Conduz um lote de issues em sessões vinculadas, com você falando só com o chat principal. |
 
-A segunda é a que faz a coisa funcionar. Uma constituição que ninguém confere é um arquivo bonito;
+A segunda é a que faz a coisa funcionar. Uma constituição que ninguém confere é um arquivo bonito.
 `conformidade-constitucional` é model-invoked, com gatilhos que casam com escrever spec, derivar
-tíquetes, planejar e revisar. O agente a alcança sozinho, sem você pedir.
+tíquetes, implementar, commitar e revisar; mas gatilho é chance, não garantia. O que garante é o
+portão no commit, descrito em [O ciclo não depende de lembrar](#o-ciclo-não-depende-de-lembrar).
 
 ## Instalação
 
@@ -35,7 +36,7 @@ Sem um CLI, seus hooks ficam preparados e a ausencia dos plugins e informada.
 **Uma vez por máquina**, não por projeto. As duas linhas abaixo instalam no escopo `user`.
 
 ```bash
-# o conjunto do Matt: 25 skills, do marketplace oficial, com auto-update
+# o conjunto do Matt, do marketplace oficial, com auto-update
 claude plugin install mattpocock-skills
 
 # a governança: este repo
@@ -61,28 +62,59 @@ Windows: `.\scripts\init-project.ps1 -Destino C:\caminho\do\projeto -User`
 
 Ele copia `template/` para o projeto, declara os dois plugins no `.claude/settings.json` de lá
 (que é o `pyproject.toml` da metodologia: quem clonar o projeto recebe os plugins ao abrir a
-sessão), instala a blindagem de segredos e roda a bateria que a confere. É idempotente, e `--user`
-estende a blindagem a todo repositório da máquina.
+sessão), instala a blindagem de segredos e o portão do ciclo, e roda as baterias que os conferem.
+É idempotente, e `--user` estende a blindagem (não o portão) a todo repositório da máquina.
 
 Depois, três comandos na sessão, na ordem, uma vez cada:
 
 ```
 /setup-matt-pocock-skills    → docs/agents/*.md + bloco ## Agent skills no CLAUDE.md
-/grill-with-docs             → entrevista + CONTEXT.md (o glossário) + docs/adr/
+/grill-with-docs             → entrevista + GLOSSARY.md (o glossário) + docs/adr/
 /constituicao                → CONSTITUTION.md, derivada da conversa que acabou de acontecer
 ```
 
 A ordem importa. `/constituicao` não entrevista: ela sintetiza. Rodada antes do `/grill-with-docs`
 ela não tem material, e vai dizer isso.
 
+Projeto semeado antes do Matt 1.3 tem `CONTEXT.md`. As skills dele agora só procuram
+`GLOSSARY.md`: `git mv CONTEXT.md GLOSSARY.md` (e `CONTEXT-MAP.md` para `GLOSSARY-MAP.md`).
+
 Depois, o ciclo de trabalho de sempre:
 
 ```
-/grill-with-docs → /to-spec → /to-tickets → /implement → /code-review
+/grill-with-docs → /to-spec → /to-tickets → /implement ou /implement-spec → /code-review → pr → /retro
 ```
 
-`conformidade-constitucional` entra sozinha ao longo desse ciclo, porque os gatilhos dela casam com
-o que essas skills estão fazendo.
+- `/implement` faz um tíquete na sessão atual. `/implement-spec` faz a spec inteira: lê os tíquetes
+  como grafo, roda implementadores em worktrees paralelos e junta tudo numa branch de integração.
+  `/conduzir-lote` é a alternativa quando você quer conversar com cada frente pelo chat principal.
+- `pr` é model-invoked: o agente a usa sozinho ao escrever o corpo do PR ou MR.
+- `/retro` olha a sessão que acabou e sugere mudança no ambiente (checagem automática, padrão de
+  código, instrução), não no código. É onde um "o agente esqueceu o teste de novo" vira trava.
+
+## O ciclo não depende de lembrar
+
+`conformidade-constitucional` e `tdd` **não** entram sozinhas com confiança. Os gatilhos da
+descrição aumentam a chance, não garantem, e as sessões mostraram o padrão: implementação pedida em
+linguagem natural ("pode implementar os tíquetes") não carrega nenhuma das duas. No Claude Code
+Desktop e na web é pior, porque as skills user-invoked (`/implement`, `/implement-spec`,
+`/to-spec`, `/constituicao`) somem da lista do modelo, e o `tdd` que o `/implement` chamaria nunca
+é chamado.
+
+Por isso, duas camadas:
+
+1. **Instrução no `CLAUDE.md`.** O ponteiro que a `/constituicao` escreve em `## Constituição`
+   manda chamar `tdd` antes de editar código e `conformidade-constitucional` antes de entregar spec,
+   tíquetes, plano, commit ou MR. É o único texto que toda sessão carrega.
+2. **Portão no commit.** O hook `.claude/hooks/ciclo-antes-do-commit.js`, que o `init-project`
+   instala, nega o `git commit` que leva código quando a sessão não chamou `tdd`, quando editou
+   código de produção antes de chamá-la, ou, havendo `CONSTITUTION.md`, quando não chamou a
+   conferência. A negação diz o que falta; o agente roda e tenta de novo.
+
+O portão lê a transcrição da sessão e das subagentes dela. Ele não vê edição feita por Bash
+(`sed`, heredoc) para conferir a ordem, e só existe no Claude Code. Caminho que não é código para
+o projeto (infra, dados) vai em `.claude/ciclo.json`, `{ "ignorar": ["^infra/"] }`, decisão do
+dono do projeto. Projeto já semeado recebe o portão rodando o `init-project` de novo.
 
 ## Blindagem de segredos
 
@@ -114,14 +146,15 @@ do arquivo sem abrir o conteúdo, e passam. Sem isso, `echo ".env" >> .gitignore
 travar trabalho legítimo. O falso positivo que sobra é o comando composto: um leitor numa parte e
 `.env` em outra bloqueia tudo. A saída é rodar os comandos separados, nunca desligar o hook.
 
-## Por que isto não se desvia, e um prompt se desvia
+## Por que isto se desvia menos que um prompt
 
-Três mecanismos, todos estruturais:
+Quatro mecanismos, do mais fraco ao único que não depende do modelo:
 
 **1. A `description` do frontmatter entra no contexto do sistema.** Skill model-invoked carrega
 gatilhos ricos ("use ao escrever uma spec, ao quebrar trabalho em tíquetes…") e o harness injeta
 isso em toda sessão. Skill user-invoked leva `disable-model-invocation: true` e só dispara quando
-você digita. Nenhum prompt seu consegue imitar isso, porque prompt é mensagem e isso é registro.
+você digita. A descrição está sempre lá, mas quem decide chamar é o modelo: gatilho rico aumenta a
+chance, não garante. As sessões mostraram a conformidade disparando só quando alguém a citava.
 
 **2. Dependência é chamada de ferramenta, não link.** `Call the Skill tool with "grilling"`, nunca
 `/grilling` solto na prosa nem `../grilling/SKILL.md`. Nomear a ferramenta tem taxa de acerto muito
@@ -132,6 +165,11 @@ skill; quando um passo depende de uma, a instrução é para o humano rodar.
 começam com "o tracker deveria ter sido fornecido; se não, diga ao usuário para rodar
 `/setup-…`". Elas param em vez de improvisar. Prompt degrada em silêncio; arquivo ausente para o
 fluxo.
+
+**4. Portão que nega a ação.** Os três acima dependem de o modelo ler e obedecer. Hook não: o
+`ciclo-antes-do-commit.js` nega o commit sem `tdd` e sem conferência, e o
+`block-secrets.js` nega a leitura de segredo. Regra que importa a ponto de doer quando falha vira
+hook; o resto fica em texto.
 
 ## Um detalhe que custa caro se ignorado
 
@@ -152,7 +190,7 @@ vagueza, não especificidade.
 | `CONSTITUTION.md` | regra vinculante sobre toda alteração, com racional |
 | spec (`/to-spec`) | comportamento de uma feature |
 | ADR (`docs/adr/`) | uma decisão e o trade-off que a produziu |
-| `CONTEXT.md` | definição de um termo do domínio |
+| `GLOSSARY.md` | definição de um termo do domínio |
 | config do linter | preferência de formatação |
 
 Detalhe do formato que quase todo mundo erra: o **relatório de impacto** no topo do arquivo é
@@ -296,6 +334,6 @@ nova versao de skills nem as instala em duplicidade. O commit da migracao e loca
 A esteira `.github/workflows/guardrails.yml` executa essa bateria em Windows e Linux e recusa
 copias divergentes. Validacao local desta migracao: 66 casos por adaptador, 25 casos legados,
 merge/idempotencia/backup do instalador e semeadura PowerShell em projeto descartavel. Nenhum
-`.env` real foi aberto. O validador Claude atual aceita o marketplace; `plugin validate --strict`
-acusa o aviso preexistente sobre CLAUDE.md na raiz, que nao e contexto distribuido pelo plugin.
+`.env` real foi aberto. O validador Claude atual aceita o marketplace. O `CLAUDE.md` de manutencao mora em
+`.claude/CLAUDE.md`: na raiz, o `plugin validate --strict` o acusa, porque a raiz e a do plugin.
 As skills e os manifests nao foram alterados nesta migracao.

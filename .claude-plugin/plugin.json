@@ -1,6 +1,6 @@
 {
   "name": "israel-skills",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Governança e condução para o fluxo do mattpocock-skills: escreve a constituição do projeto a partir da conversa, confere spec, tíquetes, plano e diff contra ela, e conduz um lote de issues em sessões vinculadas a partir de um chat principal.",
   "author": {
     "name": "Israel Azevedo Fabiano"

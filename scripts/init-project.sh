@@ -46,8 +46,8 @@ mkdir -p "$DESTINO/.claude/hooks" "$DESTINO/.codex/hooks" "$DESTINO/scripts"
 cp "$TEMPLATE/.claude/hooks/"* "$DESTINO/.claude/hooks/"
 cp "$TEMPLATE/.codex/hooks/"* "$DESTINO/.codex/hooks/"
 cp "$TEMPLATE/scripts/"* "$DESTINO/scripts/"
-echo "  .claude/hooks/  block-secrets.js, casos.txt, test.js"
-echo "  scripts/        aplicar-blindagem.js, setup-metodologia.sh, setup-metodologia.ps1"
+echo "  .claude/hooks/  block-secrets.js, casos.txt, test.js, ciclo-antes-do-commit.js, test-ciclo.js"
+echo "  scripts/        aplicar-blindagem.js, aplicar-ciclo.js, setup-metodologia.sh, setup-metodologia.ps1"
 
 echo
 cd "$DESTINO"
