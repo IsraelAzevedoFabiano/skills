@@ -114,6 +114,37 @@ do arquivo sem abrir o conteúdo, e passam. Sem isso, `echo ".env" >> .gitignore
 travar trabalho legítimo. O falso positivo que sobra é o comando composto: um leitor numa parte e
 `.env` em outra bloqueia tudo. A saída é rodar os comandos separados, nunca desligar o hook.
 
+## Sem coautoria de IA
+
+Nenhuma IA assina commit, PR ou código do dono da máquina. Vale para todo projeto da máquina e
+para qualquer agente, inclusive os que ainda não estão instalados, porque a última camada é o Git.
+Uma vez por máquina:
+
+```sh
+node scripts/sem-coautoria-ia.js
+```
+
+`init-project` com `--user` (ou `-User`) já roda isto. Repita depois de um `git pull` aqui.
+
+| Camada | Onde | O que cobre |
+|---|---|---|
+| Atribuição desligada | `~/.claude/settings.json`: `attribution.commit` e `attribution.pr` vazios | O Claude Code para de pôr `Co-Authored-By` e "Generated with" |
+| Instrução global | bloco entre marcadores em `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` e, se a ferramenta existir, `~/.copilot/copilot-instructions.md` e `~/.gemini/GEMINI.md` | PR, MR, issue e código, que o Git não vê |
+| Hook global do Git | `hook.sem-coautoria-ia` no `~/.gitconfig`, rodando `~/.config/git/sem-coautoria-ia/remover-coautoria-ia.sh` no `commit-msg` | Qualquer agente, configurado ou não |
+
+O hook é por configuração (Git 2.54+), não por `core.hooksPath`: roda **além** do hook do
+repositório, então vale em projeto com husky ou `pre-commit` sem tomar o lugar deles. Com Git mais
+antigo o instalador avisa e aplica só as duas primeiras camadas.
+
+O filtro tira trailers `Co-authored-by`, `Assisted-by`, `Signed-off-by`, `Generated-by` e afins
+cujo valor cite uma IA (Claude, Anthropic, OpenAI, Codex, ChatGPT, GPT, Copilot, Gemini, Cursor,
+Aider, Windsurf e outras), linhas "Generated with ..." de IA e linhas que começam com 🤖. Casa
+palavra inteira: `Claudemir` e `Claudete` ficam. `node scripts/test-sem-coautoria-ia.js` prova os
+dois lados num `HOME` descartável.
+
+Limites: `git commit --no-verify` pula o hook, e mensagem escrita fora do Git (descrição de MR,
+squash feito no servidor) depende só da instrução.
+
 ## Por que isto não se desvia, e um prompt se desvia
 
 Três mecanismos, todos estruturais:

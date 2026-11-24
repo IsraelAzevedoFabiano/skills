@@ -44,3 +44,9 @@ Write-Host "  scripts\        aplicar-blindagem.js, setup-metodologia.sh, setup-
 Write-Host ""
 Set-Location $Destino
 if ($User) { .\scripts\setup-metodologia.ps1 -User } else { .\scripts\setup-metodologia.ps1 }
+
+if ($User) {
+  Write-Host ""
+  node (Join-Path $repo "scripts\sem-coautoria-ia.js")
+  if ($LASTEXITCODE -ne 0) { Write-Error "sem-coautoria-ia falhou." }
+}
