@@ -52,3 +52,8 @@ echo "  scripts/        aplicar-blindagem.js, aplicar-ciclo.js, setup-metodologi
 echo
 cd "$DESTINO"
 sh scripts/setup-metodologia.sh $USER_FLAG
+
+if [ -n "$USER_FLAG" ]; then
+  echo
+  node "$REPO/scripts/sem-coautoria-ia.js"
+fi
