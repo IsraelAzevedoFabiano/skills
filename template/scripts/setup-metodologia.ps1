@@ -9,6 +9,10 @@ if ($User) { node scripts/install-codex-hooks.js --user } else { node scripts/in
 if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar travas Codex" }
 node .claude/hooks/test.js
 if ($LASTEXITCODE -ne 0) { throw "Falha na regressao Claude" }
+node scripts/aplicar-ciclo.js
+if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar o portao do ciclo" }
+node .claude/hooks/test-ciclo.js
+if ($LASTEXITCODE -ne 0) { throw "Falha na regressao do portao do ciclo" }
 if (Get-Command claude -ErrorAction SilentlyContinue) {
   claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project
   if ($LASTEXITCODE -ne 0) { throw "Falha ao configurar marketplace Claude" }

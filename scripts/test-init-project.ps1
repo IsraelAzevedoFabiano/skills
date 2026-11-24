@@ -9,7 +9,7 @@ function claude { $chamadasTeste.Add('claude ' + ($args -join ' ')); $global:LAS
 function codex { $chamadasTeste.Add('codex ' + ($args -join ' ')); $global:LASTEXITCODE = 0 }
 try {
   & (Join-Path $repoTeste 'scripts/init-project.ps1') -Destino $destinoTeste
-  foreach ($arquivo in @('.claude/settings.json', '.codex/hooks.json', '.codex/hooks/block-secrets.js')) {
+  foreach ($arquivo in @('.claude/settings.json', '.codex/hooks.json', '.codex/hooks/block-secrets.js', '.claude/hooks/ciclo-antes-do-commit.js')) {
     if (-not (Test-Path -LiteralPath (Join-Path $destinoTeste $arquivo))) { throw "Ausente: $arquivo" }
   }
   foreach ($comando in @(

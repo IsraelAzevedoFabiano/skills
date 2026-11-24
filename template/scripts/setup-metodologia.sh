@@ -8,6 +8,8 @@ case " $* " in
   *) node scripts/install-codex-hooks.js --project . ;;
 esac
 node .claude/hooks/test.js
+node scripts/aplicar-ciclo.js
+node .claude/hooks/test-ciclo.js
 if command -v claude >/dev/null 2>&1; then
   claude plugin marketplace add IsraelAzevedoFabiano/skills --scope project
   claude plugin install mattpocock-skills@claude-plugins-official --scope project
